@@ -16,23 +16,22 @@ class NoteItem(object):
     style : dict
         dict containing format tags
     """
-    def __init__(self, style='TeX', **kwargs):
-        self.style = style
+    def __init__(self, **kwargs):
         self.head = {}
         self.foot = {}
         self.head['TeX'] = ''
         self.foot['TeX'] = '\n'
         self.kwargs = kwargs
         self.items = []
-    def get_tex(self):
+    def get_tex(self, style='TeX'):
         """
         Returns the ASCII tex string
         """
         text = ""
-        text += self.head[self.style]
+        text += self.head[style]
         for item in self.items:
             text += item.get_tex()
-        text += self.foot[self.style]
+        text += self.foot[style]
         return text
         
     def add_item(self, item, **kwargs):
@@ -61,7 +60,7 @@ class Text(NoteItem):
     def __init__(self, text, **kwargs):
         super(Text, self).__init__(**kwargs)
         self.text = text
-    def get_tex(self):
+    def get_tex(self, style='TeX'):
         return self.text
 
 class Slide(NoteItem):
