@@ -34,7 +34,7 @@ class NoteItem(object):
         text += self.foot[style]
         return text
         
-    def add_item(self, item, **kwargs):
+    def add_item(self, item):
         """
         Adds an item to the items list
         
@@ -116,7 +116,7 @@ class Worknote(NoteItem):
     def build_pdf(self, filename):
         import codecs
         f_out = codecs.open(filename+".tex", 'w', encoding='utf-8') 
-        f_out.write(self.get_tex('lehrer'))
+        f_out.write(self.get_tex())
         f_out.close()       
         print "Building pdf"
         from subprocess import call
