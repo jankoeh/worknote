@@ -9,6 +9,10 @@ from worknotes import Worknote
 wn = Worknote("./")
 wn("test", cat='slide')
 wn("test text", cat='text')
+wn("x=\sqrt{4}", cat='equation')
 wn("Slide2", cat='slide')
-print wn.get_tex()
+wn("item1", cat='list')
+wn("item1", cat='list')
+
+print wn.get_text()
 

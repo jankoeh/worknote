@@ -19,18 +19,18 @@ class NoteItem(object):
     def __init__(self, **kwargs):
         self.head = {}
         self.foot = {}
-        self.head['TeX'] = ''
-        self.foot['TeX'] = '\n'
+        self.head['Beamer'] = ''
+        self.foot['Beamer'] = '\n'
         self.kwargs = kwargs
         self.items = []
-    def get_tex(self, style='TeX'):
+    def get_text(self, style='Beamer'):
         """
         Returns the ASCII tex string
         """
         text = ""
         text += self.head[style]
         for item in self.items:
-            text += item.get_tex()
+            text += item.get_text(style)
         text += self.foot[style]
         return text
         
@@ -52,15 +52,53 @@ class NoteItem(object):
         self.add_item(item, **kwargs)
 
 
+class List(NoteItem):
+    """
+    The List environment
+    """
+    def __init__(self, **kwargs):
+        super(List, self).__init__(**kwargs)        
+        self.head['Beamer'] = '\\begin{itemize}\n'
+        self.foot['Beamer'] = '\\end{itemize}\n'
+
+class ListItem(NoteItem):
+    def __init__(self, item, **kwargs):  
+        super(ListItem, self).__init__(**kwargs)
+        self.head['Beamer'] = '\\item '
+        self.foot['Beamer'] = '\n'        
+        self.item = item
+    def get_text(self, style='Beamer'):
+        text = ""
+        text += self.head[style]
+        text += self.item
+        text += self.foot[style]
+        return text
+        
+class Equation(NoteItem):
+    """
+    An Equation
+    """
+    def __init__(self, equation, **kwargs):
+        super(Equation, self).__init__(**kwargs)        
+        self.head['Beamer'] = '$$'
+        self.foot['Beamer'] = '$$\n'
+        self.equation = equation
+    def get_text(self, style='Beamer'):
+        text = ""
+        text += self.head[style]
+        text += self.equation
+        text += self.foot[style]
+        return text
+        
 class Text(NoteItem):
     """
-    One Slide of a Worknote
+    Simple Text
     
     """
     def __init__(self, text, **kwargs):
         super(Text, self).__init__(**kwargs)
         self.text = text
-    def get_tex(self, style='TeX'):
+    def get_text(self, style='Beamer'):
         return self.text
 
 class Slide(NoteItem):
@@ -70,11 +108,25 @@ class Slide(NoteItem):
     """
     def __init__(self, title, **kwargs):
         super(Slide, self).__init__(**kwargs)
-        self.head['TeX'] = r"\frame{\frametitle{%s)}\n"%title
-        self.foot['TeX'] = r'}\n'
+        self.head['Beamer'] = "\\frame{\\frametitle{%s)}\n"%title
+        self.foot['Beamer'] = '}\n'
+        
+    def add_item(self, item, **kwargs):
+        """
+        Adds an item to slide
+        """
+        if type(item) == ListItem:
+            if len(self.items)==0 or type(self.items[-1]) != List:
+                self.items.append(List(**kwargs))
+            self.items[-1].add_item(item)
+        else:
+            self.items.append(item)
+        
 
 TYPES = {'slide' : Slide,
-         'text' : Text}
+         'text' : Text,
+         'equation' : Equation,
+         'list' : ListItem}
 
         
 class Worknote(NoteItem):
@@ -85,8 +137,8 @@ class Worknote(NoteItem):
     def __init__(self, workdir, title='', author='', **kwargs):
         super(Worknote, self).__init__(**kwargs)
         self.workdir = workdir
-        self.head['TeX'] = "beginnning of doc inc author and title"
-        self.foot['TeX'] = "end of document"
+        self.head['Beamer'] = "beginnning of doc inc author and title\n"
+        self.foot['Beamer'] = "end of document"
         
 
     def add_item(self, item, cat=None, **kwargs):
@@ -116,7 +168,7 @@ class Worknote(NoteItem):
     def build_pdf(self, filename):
         import codecs
         f_out = codecs.open(filename+".tex", 'w', encoding='utf-8') 
-        f_out.write(self.get_tex())
+        f_out.write(self.get_text())
         f_out.close()       
         print "Building pdf"
         from subprocess import call
