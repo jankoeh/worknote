@@ -24,4 +24,8 @@ wn(fig)
 wn('  * item 3')
 wn(fig, cat='figurepage')
 print wn.get_text()
-
+print
+wn.save()
+wn2 = Worknote('./test')
+wn2.load()
+print wn.get_text()
