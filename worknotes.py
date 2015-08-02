@@ -166,7 +166,7 @@ def find_category(item):
     Args
     ----
     item : arbitrary
-        Arbirary valid item
+        Arbitrary valid item
     
     Returns
     -------
@@ -254,14 +254,17 @@ class Worknote(NoteContainer):
     def __call__(self, item, cat=None, **kwargs):
         self.add_item(item, cat, **kwargs)            
             
-    def build_pdf(self, filename):
+    def build_pdf(self, style='Beamer'):
+        from os import path
         import codecs
-        f_out = codecs.open(filename+".tex", 'w', encoding='utf-8') 
-        f_out.write(self.get_text())
+        f_out = codecs.open(path.join(self.workdir, "beamer.tex"), 'w', encoding='utf-8') 
+        f_out.write(self.get_text(style='Beamer'))
         f_out.close()       
-        print "Building pdf"
-        from subprocess import call
-        call(["pdflatex", '-output-directory='+self.workdir, filename+".tex"])
+        #print "Building pdf"
+        #from subprocess import call
+        #call(["pdflatex", '-output-directory='+self.workdir, filename+".tex"])
+
+
         
     def set_workdir(self, workdir):
         """
