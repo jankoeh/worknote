@@ -1,10 +1,12 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Jul 31 13:55:18 2015
+WorkNote
+========
 
-@author: koehler
-"""
+Class that allows to drop comments in figures into a presentation while interactively working with python
 
+Example
+-------
+
+```python
 from worknotes import Worknote
 wn = Worknote("./test")
 wn("First slide title", cat='slide')
@@ -16,7 +18,16 @@ plot(sqrt(arange(10)))
 wn("Slide with figure on it", cat='slide')
 wn(gcf(), cat='figure')
 wn("Slide with a list on it", cat='slide')
-wn('some ist item', cat='list')
+wn('some list item', cat='list')
 wn('  * implicit list declarationvia "* "')
 wn("implicit declaration of text")
 wn.build_pdf()   #build function to be implemented , see ./test/beamer.tex
+```
+
+Roadmap
+-------
+
+  * Build pdf functionality
+  * Support multiple formats, such as LaTex reports, Markdown, HTML
+  * Figure item to handle naming
+  * Save Worknote as pickle?

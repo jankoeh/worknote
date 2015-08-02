@@ -118,6 +118,7 @@ class Figure(NoteItem):
         else:
             fn_figure = "dummy.pdf"
             figure.savefig(path.join(workdir,fn_figure))
+        print "Figure naming not yet implemented - using dummy name"
         self.text = fn_figure
 
 
@@ -158,7 +159,7 @@ def find_category(item):
     Args
     ----
     item : arbitrary
-        Arbirary valid item
+        Arbitrary valid item
     
     Returns
     -------
@@ -189,15 +190,19 @@ class Worknote(NoteContainer):
     interactively working with python
     """
     def __init__(self, workdir, title='', author='', **kwargs):
+        import os
         super(Worknote, self).__init__(**kwargs)
         self.workdir = workdir
+        if not os.path.exists(workdir):
+                os.makedirs(workdir)
+        else:
+            print "Directory %s exists, possible notes will be overwritten"%workdir
         self.head['Beamer'] = """
 \\documentclass{beamer}
 \\mode<presentation>
 {
   \\usetheme{Boadilla}
   %\\usetheme{Pittsburgh}
-  %\\setbeamercovered{transparent}
 }        
 \\setbeamertemplate{footline}[frame number]
 \\setbeamertemplate{navigation symbols}{}
@@ -238,14 +243,15 @@ class Worknote(NoteContainer):
     def __call__(self, item, cat=None, **kwargs):
         self.add_item(item, cat, **kwargs)            
             
-    def build_pdf(self, filename):
+    def build_pdf(self, style='Beamer'):
+        from os import path
         import codecs
-        f_out = codecs.open(filename+".tex", 'w', encoding='utf-8') 
-        f_out.write(self.get_text())
+        f_out = codecs.open(path.join(self.workdir, "beamer.tex"), 'w', encoding='utf-8') 
+        f_out.write(self.get_text(style='Beamer'))
         f_out.close()       
-        print "Building pdf"
-        from subprocess import call
-        call(["pdflatex", '-output-directory='+self.workdir, filename+".tex"])
+        #print "Building pdf"
+        #from subprocess import call
+        #call(["pdflatex", '-output-directory='+self.workdir, filename+".tex"])
 
 
         
