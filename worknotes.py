@@ -105,18 +105,26 @@ class Figure(NoteItem):
     """
     A Figure
     """
-    def __init__(self, figure, workdir, size=1, **kwargs):
+    def __init__(self, figure, workdir, size=1, gfxfmt = 'pdf', **kwargs):
         super(Figure, self).__init__(**kwargs)
-        from os import path 
+        from os import path, listdir
         self.head['Beamer'] = "\\includegraphics[width=%g\\textwidth]{"%(size)
         self.foot['Beamer'] = "}\n"
+        
+        files = listdir(workdir)
+        non_fig_files = [workdir + '.worknote']
+        for filename in non_fig_files:
+            if filename in files:
+                files.remove(filename)
+        #We do len + 1 here to avoid having the files starting with fig0
+        fn_figure = 'fig' + str(len(files) + 1)
 
         if type(figure) == str:
             from shutil import copyfile
-            fn_figure =  path.basename(figure)
+            fn_figure += '.' + path.splitext(path.basename(figure))[1]
             copyfile(figure, path.join(workdir,fn_figure))
         else:
-            fn_figure = "dummy.pdf"
+            fn_figure += '.' + gfxfmt
             figure.savefig(path.join(workdir,fn_figure))
         self.text = fn_figure
 
