@@ -295,10 +295,9 @@ class Worknote(NoteContainer):
         from os.path import join
         if self.workdir is None:
             if workdir is None:
-                if self.workdir is None:
-                    from os import OSError
-                    raise OSError('No working directory given')
-                    return
+                from os import OSError
+                raise OSError('No working directory given')
+                return
             self.set_workdir(workdir)
         with open(join(self.workdir,
                        self.workdir + '.worknote'), 'rb') as infile:
