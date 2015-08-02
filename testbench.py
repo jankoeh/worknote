@@ -23,9 +23,14 @@ wn("Die Figure", cat='slide')
 wn(fig)
 wn('  * item 3')
 wn(fig, cat='figurepage')
-print wn.get_text()
+wn1_output = wn.get_text()
+print wn1_output
 print
 wn.save()
 wn2 = Worknote('./test')
 wn2.load()
-print wn.get_text()
+wn2_output = wn.get_text()
+if wn1_output == wn2_output:
+    print 'Saving and loading successful.'
+else:
+    print 'ERROR: There were differences in the saved and loaded data'
