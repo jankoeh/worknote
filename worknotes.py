@@ -196,7 +196,8 @@ class Worknote(NoteContainer):
     Class That allows to drop comments in figures into a presentation while 
     interactively working with python
     """
-    def __init__(self, workdir = None, title='', author='', **kwargs):
+    def __init__(self, workdir = None, title='', author='', date = '',
+                 **kwargs):
         super(Worknote, self).__init__(**kwargs)
         self.set_workdir(workdir)
         self.head['Beamer'] = """
@@ -214,7 +215,10 @@ class Worknote(NoteContainer):
 \\begin{document}
         """
         self.foot['Beamer'] = "\\end{document}"
-        
+        self.metadata = {}
+        self.metadata['title'] = title
+        self.metadata['author'] = author
+        self.metadata['date'] = date            
 
     def add_item(self, item, cat=None, **kwargs):
         """
@@ -294,6 +298,7 @@ class Worknote(NoteContainer):
             cPickle.dump(self.head, outfile, cPickle.HIGHEST_PROTOCOL)
             cPickle.dump(self.foot, outfile, cPickle.HIGHEST_PROTOCOL)
             cPickle.dump(self.items, outfile, cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump(self.metadata, outfile, cPickle.HIGHEST_PROTOCOL)
     
     def load(self, workdir = None):
         """
@@ -312,3 +317,9 @@ class Worknote(NoteContainer):
             self.head = cPickle.load(infile)
             self.foot = cPickle.load(infile)
             self.items = cPickle.load(infile)
+            self.metadata = cPickle.load(infile)
+
+def value(var, verbosity = 0):
+    #I have an idea of how this should work, for now it is a placeholder bc 
+    #it's late today
+    return str(var)
