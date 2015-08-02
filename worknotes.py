@@ -188,9 +188,9 @@ class Worknote(NoteContainer):
     Class That allows to drop comments in figures into a presentation while 
     interactively working with python
     """
-    def __init__(self, workdir, title='', author='', **kwargs):
+    def __init__(self, workdir = None, title='', author='', **kwargs):
         super(Worknote, self).__init__(**kwargs)
-        self.workdir = workdir
+        self.set_workdir(workdir)
         self.head['Beamer'] = """
 \\documentclass{beamer}
 \\mode<presentation>
@@ -227,6 +227,9 @@ class Worknote(NoteContainer):
             if cat == None:
                 print "Item not added"
                 return
+            if cat in ['figure', 'figurepage'] and self.workdir is None:
+                print 'Cannot add figure until working directory is set'
+                return
         item = TYPES[cat](item, workdir=self.workdir, **kwargs)
         if cat == 'slide':
             self.items.append(item)
@@ -235,6 +238,7 @@ class Worknote(NoteContainer):
             self.items[-1].add_item(item)
         else:
             self.items[-1].add_item(item)
+            
     def __call__(self, item, cat=None, **kwargs):
         self.add_item(item, cat, **kwargs)            
             
@@ -246,9 +250,58 @@ class Worknote(NoteContainer):
         print "Building pdf"
         from subprocess import call
         call(["pdflatex", '-output-directory='+self.workdir, filename+".tex"])
-
-
         
+    def set_workdir(self, workdir):
+        """
+        Set the working directory
         
-        
-        
+        Args
+        ----
+        workdir : str
+            Path of the working directory to use. If the last directory does
+            not exist, it will be created.
+        """
+        from os.path import exists
+        if not workdir is None:
+            self.workdir = workdir
+            if not exists(self.workdir):
+                from os import mkdir
+                try:
+                    mkdir(self.workdir)
+                except OSError:
+                    print "ERROR: Unable to create working directory"
+        else:
+            print 'WARNING: No working directory set'
+            print '\tUnable to save or add figures'
+            self.workdir = None
+            
+    def save(self):
+        """
+        Save the worknotes to the working directory
+        """
+        import cPickle
+        from os.path import join
+        with open(join(self.workdir,
+                       self.workdir + '.worknote'), 'wb') as outfile:
+            cPickle.dump(self.head, outfile, cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump(self.foot, outfile, cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump(self.items, outfile, cPickle.HIGHEST_PROTOCOL)
+    
+    def load(self, workdir = None):
+        """
+        Load the worknotes from a working directory
+        """
+        import cPickle
+        from os.path import join
+        if self.workdir is None:
+            if workdir is None:
+                if self.workdir is None:
+                    from os import OSError
+                    raise OSError('No working directory given')
+                    return
+            self.set_workdir(workdir)
+        with open(join(self.workdir,
+                       self.workdir + '.worknote'), 'rb') as infile:
+            self.head = cPickle.load(infile)
+            self.foot = cPickle.load(infile)
+            self.items = cPickle.load(infile)
