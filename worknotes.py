@@ -112,10 +112,11 @@ class Figure(NoteItem):
     """
     A Figure
     """
-    def __init__(self, data, workdir, size=1, gfxfmt = 'pdf', **kwargs):
+    def __init__(self, data, workdir, size=1, gfxfmt='pdf', align='center', **kwargs):
         self.workdir = workdir
         self.size = size
         self.gfxfmt = gfxfmt
+	self.align = align
         super(Figure, self).__init__(data, **kwargs)
     def clean_data(self, data):
         from os import path
@@ -132,8 +133,11 @@ class Figure(NoteItem):
             data.savefig(path.join(self.workdir,fn_figure))
         return fn_figure
     def get_text(self, style):
-        if style in ['Beamer', 'LaTeX']:     
-            return "\\includegraphics[width=%g\\textwidth]{%s}\n"%(self.size, self.data)
+        if style in ['Beamer', 'LaTeX']:
+            text = "\\includegraphics[width=%g\\textwidth]{%s}\n"%(self.size, self.data)
+            if self.align:
+                text = "\\begin{%s}\n %s \\end{%s}"%(self.align, text, self.align)
+            return text
         else:
             self.data
 

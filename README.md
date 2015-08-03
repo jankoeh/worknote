@@ -27,7 +27,7 @@ wn.build_pdf()   #build function to be implemented , see ./test/beamer.tex
 Roadmap
 -------
 
-  * Build pdf functionality
+  * ~~bUild pdf functionality~~  Can be used with pdflatex
   * Support multiple formats, such as LaTex reports, Markdown, HTML
   * ~~Figure item to handle naming~~ Done
   * ~~Save Worknote as pickle?~~ Done
