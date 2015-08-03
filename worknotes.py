@@ -41,8 +41,9 @@ class NoteContainer(NoteItem):
         self.foot = {'default' : ''}
         self.items = []
 
-    def get_text(self, style):
+    def get_text(self, style='Beamer'):
         """
+        Returns the ASCII tex string
         """
         if style not in self.head:
             style = 'default'
@@ -111,20 +112,25 @@ class Figure(NoteItem):
     """
     A Figure
     """
-    def __init__(self, data, workdir, size=1, **kwargs):
+    def __init__(self, data, workdir, size=1, gfxfmt = 'pdf', **kwargs):
         self.workdir = workdir
         self.size = size
+        self.gfxfmt = gfxfmt
         super(Figure, self).__init__(data, **kwargs)
     def clean_data(self, data):
-        from os import path 
+        from os import path
+        from glob import glob
+        files = glob(path.join(self.workdir, 'fig[0-9]*'))
+        print files
+        #We do len + 1 here to avoid having the files starting with fig0
+        fn_figure = 'fig' + str(len(files) + 1)
         if type(data) == str:
             from shutil import copyfile
-            fn_figure =  path.basename(data)
+            fn_figure += '.' + path.splitext(path.basename(data))[1]
             copyfile(data, path.join(self.workdir,fn_figure))
         else:
-            fn_figure = "dummy.pdf"
+            fn_figure += '.' + self.gfxfmt
             data.savefig(path.join(self.workdir,fn_figure))
-        print "Figure naming not yet implemented - using dummy name"
         return fn_figure
     def get_text(self, style):
         if style in ['Beamer', 'LaTeX']:     
@@ -233,20 +239,17 @@ class Worknote(NoteContainer):
     author : str
         Author name           
     """
-    def __init__(self, workdir, title='', author='', **kwargs):
-        import os
+    def __init__(self, workdir = None, title='', author='', date = '',
+                 **kwargs):
         super(Worknote, self).__init__(**kwargs)
-        self.workdir = workdir
-        if not os.path.exists(workdir):
-                os.makedirs(workdir)
-        else:
-            print "Directory %s exists, possible notes will be overwritten"%workdir
+        self.set_workdir(workdir)
         self.head['Beamer'] = """
 \\documentclass{beamer}
 \\mode<presentation>
 {
   \\usetheme{Boadilla}
   %\\usetheme{Pittsburgh}
+  %\\setbeamercovered{transparent}
 }        
 \\setbeamertemplate{footline}[frame number]
 \\setbeamertemplate{navigation symbols}{}
@@ -255,7 +258,10 @@ class Worknote(NoteContainer):
 \\begin{document}
         """
         self.foot['Beamer'] = "\\end{document}"
-        
+        self.metadata = {}
+        self.metadata['title'] = title
+        self.metadata['author'] = author
+        self.metadata['date'] = date            
 
     def add_item(self, item, cat=None, **kwargs):
         """
@@ -276,6 +282,9 @@ class Worknote(NoteContainer):
             if cat == None:
                 print "Item not added"
                 return
+            if cat in ['figure', 'figurepage'] and self.workdir is None:
+                print 'Cannot add figure until working directory is set'
+                return
         item = TYPES[cat](item, workdir=self.workdir, **kwargs)
         if cat == 'slide':
             self.items.append(item)
@@ -284,6 +293,7 @@ class Worknote(NoteContainer):
             self.items[-1].add_item(item)
         else:
             self.items[-1].add_item(item)
+            
     def __call__(self, item, cat=None, **kwargs):
         self.add_item(item, cat, **kwargs)            
             
@@ -299,6 +309,63 @@ class Worknote(NoteContainer):
 
 
         
+    def set_workdir(self, workdir):
+        """
+        Set the working directory
         
-        
-        
+        Args
+        ----
+        workdir : str
+            Path of the working directory to use. If the last directory does
+            not exist, it will be created.
+        """
+        from os.path import exists
+        if not workdir is None:
+            self.workdir = workdir
+            if not exists(self.workdir):
+                from os import mkdir
+                try:
+                    mkdir(self.workdir)
+                except OSError:
+                    print "ERROR: Unable to create working directory"
+        else:
+            print 'WARNING: No working directory set'
+            print '\tUnable to save or add figures'
+            self.workdir = None
+            
+    def save(self):
+        """
+        Save the worknotes to the working directory
+        """
+        import cPickle
+        from os.path import join
+        with open(join(self.workdir,
+                       self.workdir + '.worknote'), 'wb') as outfile:
+            cPickle.dump(self.head, outfile, cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump(self.foot, outfile, cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump(self.items, outfile, cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump(self.metadata, outfile, cPickle.HIGHEST_PROTOCOL)
+    
+    def load(self, workdir = None):
+        """
+        Load the worknotes from a working directory
+        """
+        import cPickle
+        from os.path import join
+        if self.workdir is None:
+            if workdir is None:
+                from os import OSError
+                raise OSError('No working directory given')
+                return
+            self.set_workdir(workdir)
+        with open(join(self.workdir,
+                       self.workdir + '.worknote'), 'rb') as infile:
+            self.head = cPickle.load(infile)
+            self.foot = cPickle.load(infile)
+            self.items = cPickle.load(infile)
+            self.metadata = cPickle.load(infile)
+
+def value(var, verbosity = 0):
+    #I have an idea of how this should work, for now it is a placeholder bc 
+    #it's late today
+    return str(var)

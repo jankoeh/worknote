@@ -1,7 +1,7 @@
 WorkNote
 ========
 
-Class that allows to drop comments in figures into a presentation while interactively working with python
+Class that allows to drop comments and figures into a presentation while interactively working with python
 
 Example
 -------
@@ -29,5 +29,7 @@ Roadmap
 
   * Build pdf functionality
   * Support multiple formats, such as LaTex reports, Markdown, HTML
-  * Figure item to handle naming
-  * Save Worknote as pickle?
+  * ~~Figure item to handle naming~~ Done
+  * ~~Save Worknote as pickle?~~ Done
+  * Make helper function for getting a pretty value printout for variables
+  * Handle metadata and, if metadata present, add title page (So far, can only be set via ```Worknote.__init__()``` and is ignored apart from saving and loading)
