@@ -8,25 +8,19 @@ from __future__ import unicode_literals
 
 
 class NoteItem(object):
-    def __init__(self, text='', **kwargs):
-        self.head = {}
-        self.foot = {}
-        self.head['Beamer'] = ''
-        self.foot['Beamer'] = '\n'
+    def __init__(self, data='', **kwargs):
         self.kwargs = kwargs
-        self.text = text
+        self.data = self.clean_data(data)
     def get_text(self, style='Beamer'):
         """
         Returns the ASCII tex string
         """
-        text = ""
-        text += self.head[style]
-        if type(self.text) == dict:
-            text += self.text[style]
-        else:
-            text += str(self.text)
-        text += self.foot[style]
-        return text
+        return self.data
+    def clean_data(self, data):
+        """
+        Remove any style specific marks from data
+        """
+        return data
     def __str__(self):
         return ""
     def __call__(self, item, **kwargs):
@@ -42,19 +36,22 @@ class NoteContainer(NoteItem):
         dict containing format tags
     """
     def __init__(self, **kwargs):
-        super(NoteContainer, self).__init__(**kwargs)        
+        super(NoteContainer, self).__init__(**kwargs)  
+        self.head = {'default' : ''}
+        self.foot = {'default' : ''}
         self.items = []
-    def get_text(self, style='Beamer'):
+
+    def get_text(self, style):
         """
-        Returns the ASCII tex string
         """
+        if style not in self.head:
+            style = 'default'
         text = ""
         text += self.head[style]
         for item in self.items:
             text += item.get_text(style)
         text += self.foot[style]
-        return text
-        
+        return text        
     def add_item(self, item):
         """
         Adds an item to the items list
@@ -80,47 +77,78 @@ class List(NoteContainer):
         self.foot['Beamer'] = '\\end{itemize}\n'
 
 class ListItem(NoteItem):
-    def __init__(self, item, **kwargs):  
-        super(ListItem, self).__init__(**kwargs)
-        self.head['Beamer'] = '\\item '
-        self.foot['Beamer'] = '\n'
-        if item.strip()[:2] == "* ":
-            item = item.strip()[2:]
-        self.text = item
+    def clean_data(self, data):
+        if data.strip()[:2] == "* ":
+            data = data.strip()[2:] 
+        return data
+    def get_text(self, style):
+        if style in ['Beamer', 'LaTeX']:
+            return "\\item {} \n".format(self.data)
+        elif style in ["Markdown"]:
+            return "  * {} \n".format(self.data)
+        else:
+            print "Defaulting to Markdown"
+            return "  * {} \n".format(self.data)
 
         
 class Equation(NoteItem):
     """
     An Equation
     """
-    def __init__(self, equation, **kwargs):
-        super(Equation, self).__init__(**kwargs)        
-        self.head['Beamer'] = '$$'
-        self.foot['Beamer'] = '$$\n'
-        equation = equation.strip().strip("$$")
-        self.text = equation
+    def clean_data(self, data):
+        data =  data.strip().strip("$$")
+        return data
+    def get_text(self, style):
+        if style in ['Beamer', 'LaTeX']:
+            return "$$ {} $$".format(self.data)
+        else:
+            return "$$ {} $$".format(self.data)
+            
+
 
         
 class Figure(NoteItem):
     """
     A Figure
     """
-    def __init__(self, figure, workdir, size=1, **kwargs):
-        super(Figure, self).__init__(**kwargs)
+    def __init__(self, data, workdir, size=1, **kwargs):
+        self.workdir = workdir
+        self.size = size
+        super(Figure, self).__init__(data, **kwargs)
+    def clean_data(self, data):
         from os import path 
-        self.head['Beamer'] = "\\includegraphics[width=%g\\textwidth]{"%(size)
-        self.foot['Beamer'] = "}\n"
-
-        if type(figure) == str:
+        if type(data) == str:
             from shutil import copyfile
-            fn_figure =  path.basename(figure)
-            copyfile(figure, path.join(workdir,fn_figure))
+            fn_figure =  path.basename(data)
+            copyfile(data, path.join(self.workdir,fn_figure))
         else:
             fn_figure = "dummy.pdf"
-            figure.savefig(path.join(workdir,fn_figure))
+            data.savefig(path.join(self.workdir,fn_figure))
         print "Figure naming not yet implemented - using dummy name"
-        self.text = fn_figure
+        return fn_figure
+    def get_text(self, style):
+        if style in ['Beamer', 'LaTeX']:     
+            return "\\includegraphics[width=%g\\textwidth]{%s}\n"%(self.size, self.data)
+        else:
+            self.data
 
+class Table(NoteItem):
+    """
+    Pass a list (of lists) or a numpy 2D array as argument
+    """
+    def get_text(self, style):
+        if style in ['Beamer', 'LaTeX']:
+            data = self.data
+            table = "\\begin{center}\n\\begin{tabular}{%s}\n \\hline\n"%('c'*len(data[0]))
+            if type(data[0][0]) == str:
+                table  += "&".join([str(i) for i in data[0]]) + "\\\\ \n \hline "
+                data = data[1:]
+            for line in data:
+                table  += "&".join([str(i) for i in line]) + "\\\\ \n"
+            table +="\\hline \\hline\n \\end{tabular}\n\\end{center}\n"
+            return table
+        else:
+            return str(self.data)
 
 class Slide(NoteContainer):
     """
@@ -131,6 +159,9 @@ class Slide(NoteContainer):
         super(Slide, self).__init__(**kwargs)
         self.head['Beamer'] = "\\frame{\\frametitle{%s}\n"%title
         self.foot['Beamer'] = '}\n'
+        self.head['Markdown'] = "{}\n".format(title) + "-"*len(title)+"\n"
+        self.foot['Markdown'] = "\n"
+
         
     def add_item(self, item, **kwargs):
         """
@@ -150,7 +181,8 @@ TYPES = {'slide' : Slide,
          'equation' : Equation,
          'list' : ListItem,
          'figure' : Figure,
-         'figurepage': Figure}
+         'figurepage': Figure,
+         'table' : Table}
 
 def find_category(item):
     """
@@ -166,6 +198,7 @@ def find_category(item):
     cat : str
         The determined item category
     """
+    import numpy
     import matplotlib
     from os import path
     if type(item) == str:
@@ -179,6 +212,8 @@ def find_category(item):
             cat = 'text'
     elif type(item) == matplotlib.figure.Figure:
         cat = 'figure'
+    elif type(item) == list or type(item) == numpy.ndarray:
+        cat = 'table'
     else:
         print "Category of item not recognized: %s"%type(item)
         cat = None
@@ -188,6 +223,15 @@ class Worknote(NoteContainer):
     """
     Class That allows to drop comments in figures into a presentation while 
     interactively working with python
+    
+    Args
+    ----
+    workdir : str
+        represents project name and  working directory that will be created
+    title : str
+        Title of document
+    author : str
+        Author name           
     """
     def __init__(self, workdir, title='', author='', **kwargs):
         import os
