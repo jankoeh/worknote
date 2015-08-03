@@ -121,7 +121,6 @@ class Figure(NoteItem):
         from os import path
         from glob import glob
         files = glob(path.join(self.workdir, 'fig[0-9]*'))
-        print files
         #We do len + 1 here to avoid having the files starting with fig0
         fn_figure = 'fig' + str(len(files) + 1)
         if type(data) == str:
@@ -163,11 +162,17 @@ class Slide(NoteContainer):
     """
     def __init__(self, title, **kwargs):
         super(Slide, self).__init__(**kwargs)
+        title = self.clean_data(title)
         self.head['Beamer'] = "\\frame{\\frametitle{%s}\n"%title
         self.foot['Beamer'] = '}\n'
         self.head['Markdown'] = "{}\n".format(title) + "-"*len(title)+"\n"
         self.foot['Markdown'] = "\n"
-
+    def clean_data(self, title):
+        if len(title.split("\n"))==2 and \
+             len(title.split("\n")[1])>=3 and \
+             title.split("\n")[1][:3] == '---':
+            title = title.split("\n")[0]
+        return title
         
     def add_item(self, item, **kwargs):
         """
@@ -208,12 +213,16 @@ def find_category(item):
     import matplotlib
     from os import path
     if type(item) == str:
-        if path.splitext(item)[1] in ['pdf', 'jpg', 'png', 'jpeg']:
+        if path.splitext(item)[1] in ['.pdf', '.jpg', '.png', '.jpeg']:
             cat = 'figure'
         elif item.strip()[:2] == "$$" and item.strip()[-2:] == "$$":
             cat = 'equation'
         elif item.strip()[:2] == "* ":
             cat = 'list'
+        elif len(item.split("\n"))==2 and \
+             len(item.split("\n")[1])>=3 and \
+             item.split("\n")[1][:3] == '---':
+            cat = 'slide'
         else:
             cat = 'text'
     elif type(item) == matplotlib.figure.Figure:
@@ -300,14 +309,18 @@ class Worknote(NoteContainer):
     def build_pdf(self, style='Beamer'):
         from os import path
         import codecs
-        f_out = codecs.open(path.join(self.workdir, "beamer.tex"), 'w', encoding='utf-8') 
-        f_out.write(self.get_text(style='Beamer'))
+        f_out = codecs.open(path.join(self.workdir, style+".tex"), 'w', 
+                            encoding='utf-8') 
+        f_out.write(self.get_text(style=style))
         f_out.close()       
-        #print "Building pdf"
-        #from subprocess import call
-        #call(["pdflatex", '-output-directory='+self.workdir, filename+".tex"])
-
-
+        print "Building pdf"
+        from subprocess import call
+        build = call(["pdflatex", style+".tex"], cwd=self.workdir)
+        if build==0:
+            print "Building sucessful: %s"%path.join(self.workdir, style+".pdf")
+        else:
+            print "Errors encountered during build"
+            print "Check %s for problems"%path.join(self.workdir, style+".tex")
         
     def set_workdir(self, workdir):
         """

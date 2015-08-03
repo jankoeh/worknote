@@ -7,7 +7,7 @@ Created on Fri Jul 31 13:55:18 2015
 
 from pylab import *
 
-fig = figure("")
+fig = figure(figsize=(8,6))
 plot(arange(10))
 
 from worknotes import Worknote
@@ -18,8 +18,10 @@ wn("f=\sqrt{x}", cat='equation')
 # do some python work ...
 from pylab import *
 plot(sqrt(arange(10)))
-wn("Slide with figure on it", cat='slide')
-wn(gcf(), cat='figure', size=0.8)
+xlabel("fluor/MeV")
+ylabel("Intensity g s/Liter")
+wn("Slide implicite generation\n------------------")
+wn(gcf(), cat='figure', size=.9)
 wn("Slide with a list on it", cat='slide')
 wn('some ist item', cat='list')
 wn('  * implicit list declaration via "* "')
