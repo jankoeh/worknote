@@ -268,6 +268,7 @@ class Worknote(NoteContainer):
 \\setbeamertemplate{navigation symbols}{}
 \\usepackage[english]{babel}
 \\usepackage[utf8]{inputenc}
+%%%METADATA%%%
 \\begin{document}
         """
         self.foot['Beamer'] = "\\end{document}"
@@ -381,6 +382,49 @@ class Worknote(NoteContainer):
             self.foot = cPickle.load(infile)
             self.items = cPickle.load(infile)
             self.metadata = cPickle.load(infile)
+            
+    def set_metdata(self, title = None, author = None, date = None):
+        """
+        Set the metadata used to generate a title page, if any is present.
+        Set any field to an empty string ('') to remove it from output.
+        Pass None for any field to keep current value.
+        
+        Args
+        ----
+        title : str
+        author : str
+        date : str
+        """
+        if not title is None:
+            self.metadata['title'] = title
+        if not author is None:
+            self.metadata['author'] = author
+        if not date is None:
+            self.metadata['date'] = date                    
+
+    def get_text(self, style='Beamer'):
+        """
+        Returns the ASCII tex string
+        """
+        if style not in self.head:
+            style = 'default'
+        print style
+        text = ""
+        text += self.head[style]
+        metadata_str = ""
+        if not self.metadata['title'] == '':
+            metadata_str += "\\title{" + self.metadata['title'] + "}\n"
+        if not self.metadata['author'] == '':
+            metadata_str += "\\author{" + self.metadata['author'] + "}\n"
+        if not self.metadata['date'] == '':
+            metadata_str += "\\date{" + self.metadata['date'] + "}\n"
+        text = text.replace('%%%METADATA%%%', metadata_str)
+        if not metadata_str == "":
+            text += "\\frame[plain]{\\titlepage}\n"
+        for item in self.items:
+            text += item.get_text(style)
+        text += self.foot[style]
+        return text        
 
 def value(var, verbosity = 0):
     #I have an idea of how this should work, for now it is a placeholder bc 

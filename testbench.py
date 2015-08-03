@@ -12,6 +12,7 @@ plot(arange(10))
 
 from worknotes import Worknote
 wn = Worknote("./test")
+wn.set_metdata(title = 'Test Worknotes', author = 'John Doe', date = '\\today')
 wn("First slide title", cat='slide')
 wn("The Problem we want to solve:", cat='text')
 wn("f=\sqrt{x}", cat='equation')
@@ -32,8 +33,8 @@ wn.build_pdf()   #build function to be implemented , see ./test/beamer.tex
 wn1_output = wn.get_text()
 wn.save()
 
-wn2 = Worknote('./test')
-wn2.load()
+wn2 = Worknote()
+wn2.load('./test')
 wn2_output = wn.get_text()
 if wn1_output == wn2_output:
     print 'Saving and loading successful.'
