@@ -22,7 +22,7 @@ class NoteItem(object):
         """
         return data
     def __str__(self):
-        return ""
+        return self.__class__.__name__ 
     def __call__(self, item, **kwargs):
         self.add_item(item, **kwargs)
         
@@ -65,7 +65,11 @@ class NoteContainer(NoteItem):
             Args like figsize etc            
         """
         self.items.append(item)   
-
+    def __str__(self):
+        text =  self.__class__.__name__ 
+        for item in self.items:
+            text += "\n"+str(item)
+        return text
 
 
 class List(NoteContainer):
@@ -188,7 +192,6 @@ class Slide(NoteContainer):
             self.items[-1].add_item(item)
         else:
             self.items.append(item)
-        
 
 
 TYPES = {'slide' : Slide,
