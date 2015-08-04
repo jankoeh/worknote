@@ -255,7 +255,7 @@ class Worknote(NoteContainer):
     def __init__(self, workdir = None, title='', author='', date = '',
                  **kwargs):
         super(Worknote, self).__init__(**kwargs)
-        self.set_workdir(workdir)
+        self.set_workdir(workdir, load_if_used = True)
         self.head['Beamer'] = """
 \\documentclass{beamer}
 \\mode<presentation>
@@ -273,7 +273,7 @@ class Worknote(NoteContainer):
         """
         self.foot['Beamer'] = "\\end{document}"
         self.metadata = {}
-        self.set_metdata(title, author, date)          
+        self.set_metadata(title, author, date)          
 
     def add_item(self, item, cat=None, **kwargs):
         """
@@ -325,9 +325,11 @@ class Worknote(NoteContainer):
             print "Errors encountered during build"
             print "Check %s for problems"%path.join(self.workdir, style+".tex")
         
-    def set_workdir(self, workdir):
+    def set_workdir(self, workdir, load_if_used = False):
         """
-        Set the working directory
+        Set the working directory. If load_if_used is True or there are no 
+        items in the current notes, any worknotes present in the directory will
+        automatically be loaded.
         
         Args
         ----
@@ -335,7 +337,7 @@ class Worknote(NoteContainer):
             Path of the working directory to use. If the last directory does
             not exist, it will be created.
         """
-        from os.path import exists
+        from os.path import exists, join
         if not workdir is None:
             self.workdir = workdir
             if not exists(self.workdir):
@@ -344,6 +346,13 @@ class Worknote(NoteContainer):
                     mkdir(self.workdir)
                 except OSError:
                     print "ERROR: Unable to create working directory"
+            else:
+                if exists(join(self.workdir, self.workdir + '.worknote')):
+                    if load_if_used or len(self.items) == 0:
+                        self.load(verbosity = 1)
+                    else:
+                        print 'WARNING:', self.workdir, 'is already in use.'
+                        print '\tSaving will overwrite the saved content.'
         else:
             print 'WARNING: No working directory set'
             print '\tUnable to save or add figures'
@@ -362,9 +371,17 @@ class Worknote(NoteContainer):
             cPickle.dump(self.items, outfile, cPickle.HIGHEST_PROTOCOL)
             cPickle.dump(self.metadata, outfile, cPickle.HIGHEST_PROTOCOL)
     
-    def load(self, workdir = None):
+    def load(self, workdir = None, verbosity = 0):
         """
         Load the worknotes from a working directory
+        
+        Args
+        ----
+        workdir : str
+            The directory to load from. Can be passed as None to use the
+            workdir previously set (e.g. using set_workdir or during init).
+        verbosity : int
+            Select output verbosity. Defaults to 0 (= no output)
         """
         import cPickle
         from os.path import join
@@ -374,6 +391,8 @@ class Worknote(NoteContainer):
                 raise OSError('No working directory given')
                 return
             self.set_workdir(workdir)
+        if verbosity > 0:
+            print 'Loading from', self.workdir
         with open(join(self.workdir,
                        self.workdir + '.worknote'), 'rb') as infile:
             self.head = cPickle.load(infile)
@@ -406,7 +425,6 @@ class Worknote(NoteContainer):
         """
         if style not in self.head:
             style = 'default'
-        print style
         text = ""
         text += self.head[style]
         metadata_str = ""

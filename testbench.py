@@ -5,6 +5,17 @@ Created on Fri Jul 31 13:55:18 2015
 @author: koehler
 """
 
+print 'Cleaning up test directory...'
+from os import listdir, remove, rmdir
+from os.path import join
+files = listdir('./test')
+for fn in files:
+    fnpath = join('./test', fn)
+    print fnpath
+    remove(fnpath)
+rmdir('./test')
+print 'Done.'
+
 from pylab import *
 
 fig = figure(figsize=(8,6))
@@ -17,7 +28,6 @@ wn("First slide title", cat='slide')
 wn("The Problem we want to solve:", cat='text')
 wn("f=\sqrt{x}", cat='equation')
 # do some python work ...
-from pylab import *
 plot(sqrt(arange(10)))
 xlabel("fluor/MeV")
 ylabel("Intensity g s/Liter")
