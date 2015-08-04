@@ -236,6 +236,8 @@ def find_category(item):
         cat = 'figure'
     elif type(item) == list or type(item) == numpy.ndarray:
         cat = 'table'
+    elif type(item) in [float, numpy.float64, int, numpy.int64]:
+        cat = 'numeric'
     else:
         print "Category of item not recognized: %s"%type(item)
         cat = None
@@ -258,7 +260,7 @@ class Worknote(NoteContainer):
     def __init__(self, workdir = None, title='', author='', date = '',
                  **kwargs):
         super(Worknote, self).__init__(**kwargs)
-        self.set_workdir(workdir)
+        self.set_workdir(workdir, load_if_used = True)
         self.head['Beamer'] = """
 \\documentclass{beamer}
 \\mode<presentation>
@@ -276,7 +278,7 @@ class Worknote(NoteContainer):
         """
         self.foot['Beamer'] = "\\end{document}"
         self.metadata = {}
-        self.set_metdata(title, author, date)          
+        self.set_metadata(title, author, date)          
 
     def add_item(self, item, cat=None, **kwargs):
         """
@@ -300,6 +302,9 @@ class Worknote(NoteContainer):
             if cat in ['figure', 'figurepage'] and self.workdir is None:
                 print 'Cannot add figure until working directory is set'
                 return
+        if cat == 'numeric':
+            item = value(item, **kwargs)
+            cat = 'text'
         item = TYPES[cat](item, workdir=self.workdir, **kwargs)
         if cat == 'slide':
             self.items.append(item)
@@ -328,9 +333,11 @@ class Worknote(NoteContainer):
             print "Errors encountered during build"
             print "Check %s for problems"%path.join(self.workdir, style+".tex")
         
-    def set_workdir(self, workdir):
+    def set_workdir(self, workdir, load_if_used = False):
         """
-        Set the working directory
+        Set the working directory. If load_if_used is True or there are no 
+        items in the current notes, any worknotes present in the directory will
+        automatically be loaded.
         
         Args
         ----
@@ -338,7 +345,7 @@ class Worknote(NoteContainer):
             Path of the working directory to use. If the last directory does
             not exist, it will be created.
         """
-        from os.path import exists
+        from os.path import exists, join
         if not workdir is None:
             self.workdir = workdir
             if not exists(self.workdir):
@@ -347,6 +354,13 @@ class Worknote(NoteContainer):
                     mkdir(self.workdir)
                 except OSError:
                     print "ERROR: Unable to create working directory"
+            else:
+                if exists(join(self.workdir, self.workdir + '.worknote')):
+                    if load_if_used or len(self.items) == 0:
+                        self.load(verbosity = 1)
+                    else:
+                        print 'WARNING:', self.workdir, 'is already in use.'
+                        print '\tSaving will overwrite the saved content.'
         else:
             print 'WARNING: No working directory set'
             print '\tUnable to save or add figures'
@@ -365,9 +379,17 @@ class Worknote(NoteContainer):
             cPickle.dump(self.items, outfile, cPickle.HIGHEST_PROTOCOL)
             cPickle.dump(self.metadata, outfile, cPickle.HIGHEST_PROTOCOL)
     
-    def load(self, workdir = None):
+    def load(self, workdir = None, verbosity = 0):
         """
         Load the worknotes from a working directory
+        
+        Args
+        ----
+        workdir : str
+            The directory to load from. Can be passed as None to use the
+            workdir previously set (e.g. using set_workdir or during init).
+        verbosity : int
+            Select output verbosity. Defaults to 0 (= no output)
         """
         import cPickle
         from os.path import join
@@ -377,6 +399,8 @@ class Worknote(NoteContainer):
                 raise OSError('No working directory given')
                 return
             self.set_workdir(workdir)
+        if verbosity > 0:
+            print 'Loading from', self.workdir
         with open(join(self.workdir,
                        self.workdir + '.worknote'), 'rb') as infile:
             self.head = cPickle.load(infile)
@@ -384,7 +408,7 @@ class Worknote(NoteContainer):
             self.items = cPickle.load(infile)
             self.metadata = cPickle.load(infile)
             
-    def set_metdata(self, title = "", author = "", date = ""):
+    def set_metadata(self, title = "", author = "", date = ""):
         """
         Set the metadata used to generate a title page, if any is present.
         Set any field to an empty string ('') to remove it from output.
@@ -409,7 +433,6 @@ class Worknote(NoteContainer):
         """
         if style not in self.head:
             style = 'default'
-        print style
         text = ""
         text += self.head[style]
         metadata_str = ""
@@ -427,10 +450,46 @@ class Worknote(NoteContainer):
         text += self.foot[style]
         return text        
 
-def value(var, verbosity = 0):
-    #I have an idea of how this should work, for now it is a placeholder bc 
-    #it's late today
-    return str(var)
+def value(var, precision = 3, desc = None, units = None, **kwargs):
+    """
+    Return a nice representation of a numeric variable
+    
+    Args
+    ----
+    precision : int
+        Floating point number precision
+    desc : str
+        A descriptive string to print in front of the value. If None, no 
+        description is printed.
+    units : str
+        A string containing the units of the variable. If None, no units are 
+        printed.
+    """
+    import numpy
+    if type(var) in [int, numpy.int64]:
+        res = u'{var:d}'.format(var = var)
+        res = '\\texttt{' + res + '}'
+        if not desc is None:
+            res = set_unicode(desc) + ': ' + res
+        if not units is None:
+            res += ' ' + '$' + set_unicode(units) + '$'
+        return res + '\\\\'
+    elif type(var) in [float, numpy.float64]:
+        if numpy.ceil(numpy.log10(var)) < 0 and \
+            abs(numpy.ceil(numpy.log10(var))) >= precision:
+            outfmt = 'e'
+        else:
+            outfmt = 'f'
+        fmtstr = u'{var:0.' + str(int(precision)) + outfmt + '}'
+        res = fmtstr.format(var = var)
+        res = '\\texttt{' + res + '}'
+        if not desc is None:
+            res = set_unicode(desc) + ': ' + res
+        if not units is None:
+            res += ' ' + '$' + set_unicode(units) + '$'
+        return res + '\\\\\n'
+    else:
+        return var
 
 def set_unicode(text):
     """

@@ -9,19 +9,33 @@ Example
 ```python
 from worknotes import Worknote
 wn = Worknote("./test")
+wn = Worknote("./test")
+wn.set_metadata(title = 'Test Worknotes', author = 'John Doe mit ö', date = '\\today')
 wn("First slide title", cat='slide')
-wn("The Problem we want to slove:", cat='text')
+wn("The Problem we want to solve:", cat='text')
 wn("f=\sqrt{x}", cat='equation')
 # do some python work ...
 from pylab import *
 plot(sqrt(arange(10)))
-wn("Slide with figure on it", cat='slide')
-wn(gcf(), cat='figure')
+xlabel("fluor/MeV")
+ylabel("Intensity g s/Liter")
+wn("Slide implicite generation\n------------------")
+wn(gcf(), cat='figure', size=.9)
 wn("Slide with a list on it", cat='slide')
-wn('some list item', cat='list')
-wn('  * implicit list declarationvia "* "')
+wn('some ist item', cat='list')
+wn('  * implicit list declaration via "* "')
 wn("implicit declaration of text")
-wn.build_pdf()   #build function to be implemented , see ./test/beamer.tex
+#implicit declaration of a table
+wn([['First column','Second Column', 'Third Column'],[1.,2.,3.],[4,5,6]])
+wn("Demonstrating value functionality", cat='slide')
+wn(pi, desc = 'Value of pi')
+wn(pi, precision = 5, desc = 'More precise value of pi')
+wn('We can also automatically handle values smaller than the precision...\\\\\n')
+wn(pi/1e8, desc = 'A really small value')
+wn('... as well as units:\\\\\n')
+wn(9.81, desc = 'Earth gravity acceleration', units = 'm/s^2')
+wn.build_pdf()
+wn.save()
 ```
 
 Roadmap
@@ -31,5 +45,5 @@ Roadmap
   * Support multiple formats, such as LaTex reports, Markdown, HTML
   * ~~Figure item to handle naming~~ Done
   * ~~Save Worknote as pickle?~~ Done
-  * Make helper function for getting a pretty value printout for variables
-  * Handle metadata and, if metadata present, add title page (So far, can only be set via ```Worknote.__init__()``` and is ignored apart from saving and loading)
+  * ~~Make helper function for getting a pretty value printout for variables~~ ~~Not doing that anymore, we are implementing it differently~~ Done
+  * ~~Handle metadata and, if metadata present, add title page (So far, can only be set via ```Worknote.__init__()``` and is ignored apart from saving and loading)~~ Done
