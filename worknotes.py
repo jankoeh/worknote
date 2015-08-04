@@ -233,6 +233,8 @@ def find_category(item):
         cat = 'figure'
     elif type(item) == list or type(item) == numpy.ndarray:
         cat = 'table'
+    elif type(item) in [float, numpy.float64, int, numpy.int64]:
+        cat = 'numeric'
     else:
         print "Category of item not recognized: %s"%type(item)
         cat = None
@@ -297,6 +299,9 @@ class Worknote(NoteContainer):
             if cat in ['figure', 'figurepage'] and self.workdir is None:
                 print 'Cannot add figure until working directory is set'
                 return
+        if cat == 'numeric':
+            item = value(item, **kwargs)
+            cat = 'text'
         item = TYPES[cat](item, workdir=self.workdir, **kwargs)
         if cat == 'slide':
             self.items.append(item)
@@ -442,10 +447,46 @@ class Worknote(NoteContainer):
         text += self.foot[style]
         return text        
 
-def value(var, verbosity = 0):
-    #I have an idea of how this should work, for now it is a placeholder bc 
-    #it's late today
-    return str(var)
+def value(var, precision = 3, desc = None, units = None, **kwargs):
+    """
+    Return a nice representation of a numeric variable
+    
+    Args
+    ----
+    precision : int
+        Floating point number precision
+    desc : str
+        A descriptive string to print in front of the value. If None, no 
+        description is printed.
+    units : str
+        A string containing the units of the variable. If None, no units are 
+        printed.
+    """
+    import numpy
+    if type(var) in [int, numpy.int64]:
+        res = u'{var:d}'.format(var = var)
+        res = '\\texttt{' + res + '}'
+        if not desc is None:
+            res = set_unicode(desc) + ': ' + res
+        if not units is None:
+            res += ' ' + '$' + set_unicode(units) + '$'
+        return res + '\\\\'
+    elif type(var) in [float, numpy.float64]:
+        if numpy.ceil(numpy.log10(var)) < 0 and \
+            abs(numpy.ceil(numpy.log10(var))) >= precision:
+            outfmt = 'e'
+        else:
+            outfmt = 'f'
+        fmtstr = u'{var:0.' + str(int(precision)) + outfmt + '}'
+        res = fmtstr.format(var = var)
+        res = '\\texttt{' + res + '}'
+        if not desc is None:
+            res = set_unicode(desc) + ': ' + res
+        if not units is None:
+            res += ' ' + '$' + set_unicode(units) + '$'
+        return res + '\\\\\n'
+    else:
+        return var
 
 def set_unicode(text):
     """
