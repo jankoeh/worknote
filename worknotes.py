@@ -20,7 +20,7 @@ class NoteItem(object):
         """
         Remove any style specific marks from data
         """
-        return data
+        return set_unicode(data)
     def __str__(self):
         return self.__class__.__name__ 
     def __call__(self, item, **kwargs):
@@ -85,7 +85,7 @@ class ListItem(NoteItem):
     def clean_data(self, data):
         if data.strip()[:2] == "* ":
             data = data.strip()[2:] 
-        return data
+        return set_unicode(data)
     def get_text(self, style):
         if style in ['Beamer', 'LaTeX']:
             return "\\item {} \n".format(self.data)
@@ -101,6 +101,7 @@ class Equation(NoteItem):
     An Equation
     """
     def clean_data(self, data):
+        data = set_unicode(data)
         data =  data.strip().strip("$$")
         return data
     def get_text(self, style):
@@ -153,7 +154,7 @@ class Table(NoteItem):
         if style in ['Beamer', 'LaTeX']:
             data = self.data
             table = "\\begin{center}\n\\begin{tabular}{%s}\n \\hline\n"%('c'*len(data[0]))
-            if type(data[0][0]) == str:
+            if type(data[0][0]) in [str, unicode]:
                 table  += "&".join([str(i) for i in data[0]]) + "\\\\ \n \hline "
                 data = data[1:]
             for line in data:
@@ -176,6 +177,7 @@ class Slide(NoteContainer):
         self.head['Markdown'] = "{}\n".format(title) + "-"*len(title)+"\n"
         self.foot['Markdown'] = "\n"
     def clean_data(self, title):
+        title = set_unicode(title)
         if len(title.split("\n"))==2 and \
              len(title.split("\n")[1])>=3 and \
              title.split("\n")[1][:3] == '---':
@@ -227,8 +229,8 @@ def find_category(item):
         elif item.strip()[:2] == "* ":
             cat = 'list'
         elif len(item.split("\n"))==2 and \
-             len(item.split("\n")[1])>=3 and \
-             item.split("\n")[1][:3] == '---':
+            len(item.split("\n")[1])>=3 and \
+            item.split("\n")[1][:3] == '---':
             cat = 'slide'
         else:
             cat = 'text'

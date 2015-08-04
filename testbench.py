@@ -4,17 +4,18 @@ Created on Fri Jul 31 13:55:18 2015
 
 @author: koehler
 """
-
-print 'Cleaning up test directory...'
-from os import listdir, remove, rmdir
-from os.path import join
-files = listdir('./test')
-for fn in files:
-    fnpath = join('./test', fn)
-    print fnpath
-    remove(fnpath)
-rmdir('./test')
-print 'Done.'
+from os.path import exists
+if exists('./test'):
+    print 'Cleaning up test directory...'
+    from os import listdir, remove, rmdir
+    from os.path import join
+    files = listdir('./test')
+    for fn in files:
+        fnpath = join('./test', fn)
+        print fnpath
+        remove(fnpath)
+    rmdir('./test')
+    print 'Done.'
 
 from pylab import *
 
@@ -24,7 +25,7 @@ plot(arange(10))
 from worknotes import Worknote
 wn = Worknote("./test")
 wn.set_metadata(title = 'Test Worknotes', author = 'John Doe mit ö', date = '\\today')
-wn("First slide title", cat='slide')
+wn("First slide title with unicode ü", cat='slide')
 wn("The Problem we want to solve:", cat='text')
 wn("f=\sqrt{x}", cat='equation')
 # do some python work ...
