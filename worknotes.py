@@ -381,7 +381,7 @@ class Worknote(NoteContainer):
             self.items = cPickle.load(infile)
             self.metadata = cPickle.load(infile)
             
-    def set_metdata(self, title = "", author = "", date = ""):
+    def set_metadata(self, title = "", author = "", date = ""):
         """
         Set the metadata used to generate a title page, if any is present.
         Set any field to an empty string ('') to remove it from output.
