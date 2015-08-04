@@ -216,7 +216,7 @@ def find_category(item):
     import numpy
     import matplotlib
     from os import path
-    if type(item) == str:
+    if type(item) in [str, unicode]:
         if path.splitext(item)[1] in ['.pdf', '.jpg', '.png', '.jpeg']:
             cat = 'figure'
         elif item.strip()[:2] == "$$" and item.strip()[-2:] == "$$":
@@ -273,9 +273,7 @@ class Worknote(NoteContainer):
         """
         self.foot['Beamer'] = "\\end{document}"
         self.metadata = {}
-        self.metadata['title'] = title
-        self.metadata['author'] = author
-        self.metadata['date'] = date            
+        self.set_metdata(title, author, date)          
 
     def add_item(self, item, cat=None, **kwargs):
         """
@@ -383,7 +381,7 @@ class Worknote(NoteContainer):
             self.items = cPickle.load(infile)
             self.metadata = cPickle.load(infile)
             
-    def set_metdata(self, title = None, author = None, date = None):
+    def set_metdata(self, title = "", author = "", date = ""):
         """
         Set the metadata used to generate a title page, if any is present.
         Set any field to an empty string ('') to remove it from output.
@@ -394,13 +392,13 @@ class Worknote(NoteContainer):
         title : str
         author : str
         date : str
-        """
+        """           
         if not title is None:
-            self.metadata['title'] = title
+            self.metadata['title'] = set_unicode(title)
         if not author is None:
-            self.metadata['author'] = author
+            self.metadata['author'] = set_unicode(author)
         if not date is None:
-            self.metadata['date'] = date                    
+            self.metadata['date'] = set_unicode(date) 
 
     def get_text(self, style='Beamer'):
         """
@@ -430,3 +428,21 @@ def value(var, verbosity = 0):
     #I have an idea of how this should work, for now it is a placeholder bc 
     #it's late today
     return str(var)
+
+def set_unicode(text):
+    """
+    Return unicode string
+    
+    Args:
+    -----    
+    text : str, unicode
+        Text can be string or unicode    
+    
+    Returns
+    -------
+    text : unicode
+    """
+    if type(text) == str:
+        text = unicode(text, 'utf-8')
+    return text
+    
