@@ -10,7 +10,7 @@ Example
 from worknotes import Worknote
 wn = Worknote("./test")
 wn = Worknote("./test")
-wn.set_metdata(title = 'Test Worknotes', author = 'John Doe mit ö', date = '\\today')
+wn.set_metadata(title = 'Test Worknotes', author = 'John Doe mit ö', date = '\\today')
 wn("First slide title", cat='slide')
 wn("The Problem we want to solve:", cat='text')
 wn("f=\sqrt{x}", cat='equation')
