@@ -39,6 +39,13 @@ wn('  * implicit list declaration via "* "')
 wn("implicit declaration of text")
 #implicit declaration of a table
 wn([['First column','Second Column', 'Third Column'],[1.,2.,3.],[4,5,6]])
+wn("Demonstrating value functionality", cat='slide')
+wn(pi, desc = 'Value of pi')
+wn(pi, precision = 5, desc = 'More precise value of pi')
+wn('We can also automatically handle values smaller than the precision...\\\\\n')
+wn(pi/1e8, desc = 'A really small value')
+wn('... as well as units:\\\\\n')
+wn(9.81, desc = 'Earth gravity acceleration', units = 'm/s^2')
 wn.build_pdf()   #build function to be implemented , see ./test/beamer.tex
 wn1_output = wn.get_text()
 wn.save()
