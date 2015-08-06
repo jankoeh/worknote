@@ -433,9 +433,9 @@ class Worknote(NoteContainer):
             Path of the working directory to use. If the last directory does
             not exist, it will be created.
         """
-        from os.path import exists, join
+        from os.path import exists, join, expanduser, expandvars
         if not workdir is None:
-            self.workdir = workdir
+            self.workdir = expanduser(expandvars(workdir))
             if not exists(self.workdir):
                 from os import mkdir
                 try:
