@@ -140,6 +140,55 @@ class Text(NoteItem):
         else:
             return self.data
 
+class Value(NoteItem):
+    """
+    A numerical value with units and a description
+    """
+    def __init__(self, var, precision = 3, desc = None, units = None,
+                 **kwargs):
+        self.var = var
+        self.precision = precision
+        self.desc = desc
+        self.units = units
+        self.units_wrapper = {}
+        self.units_wrapper['Beamer'] = '$%s$'
+        self.unit_formatter = {}
+        self.unit_formatter['Beamer'] = '\\mathsf{%s}'
+        self.value_formatter = {}
+        self.value_formatter['Beamer'] = '\\texttt{%s}'
+    def get_text(self, style):
+        import numpy
+        if type(self.var) in [int, numpy.int64]:
+            res = u'{var:d}'.format(var = self.var)
+        elif type(self.var) in [float, numpy.float64]:
+            if numpy.ceil(numpy.log10(self.var)) < 0 and \
+                abs(numpy.ceil(numpy.log10(self.var))) >= self.precision:
+                outfmt = 'e'
+            else:
+                outfmt = 'f'
+            fmtstr = u'{var:0.' + str(int(self.precision)) + outfmt + '}'
+            res = fmtstr.format(var = self.var)
+        res = self.value_formatter[style]%res
+        if not self.desc is None:
+            res = self.desc + ': ' + res
+        if not self.units is None:
+            res += ' ' + self.units_wrapper[style]%self.format_units(style)
+        return res + '\\\\\n'
+    def format_units(self, style):
+        import re
+        string = self.units
+        expr = '[a-zA-Z]+'
+        res = u''
+        while True:
+            match = re.search(expr, string)
+            if match:
+                res += string[:match.start()]
+                res += self.unit_formatter[style]%set_unicode(match.group(0))
+                string = string[match.end():]
+            else:
+                res += string
+                break
+        return res
 
 class Figure(NoteItem):
     """
@@ -235,7 +284,8 @@ TYPES = {'slide' : Slide,
          'enumerate' : EnumItem,
          'figure' : Figure,
          'figurepage': Figure,
-         'table' : Table}
+         'table' : Table,
+         'value' : Value}
 
 def find_category(item):
     """
@@ -274,7 +324,7 @@ def find_category(item):
     elif type(item) == list or type(item) == numpy.ndarray:
         cat = 'table'
     elif type(item) in [float, numpy.float64, int, numpy.int64]:
-        cat = 'numeric'
+        cat = 'value'
     else:
         print "Category of item not recognized: %s"%type(item)
         cat = None
@@ -297,7 +347,11 @@ class Worknote(NoteContainer):
     def __init__(self, workdir = None, title='', author='', date = '',
                  **kwargs):
         super(Worknote, self).__init__(**kwargs)
-        self.set_workdir(workdir, load_if_used = True)
+        if 'load_if_used' in kwargs:
+            load_if_used = kwargs.pop('load_if_used')
+        else:
+            load_if_used = True
+        self.set_workdir(workdir, load_if_used = load_if_used)
         self.head['Beamer'] = """
 \\documentclass{beamer}
 \\mode<presentation>
@@ -339,9 +393,6 @@ class Worknote(NoteContainer):
         if cat in ['figure', 'figurepage'] and self.workdir is None:
             print 'Cannot add figure until working directory is set'
             return
-        if cat == 'numeric':
-            item = value(item, **kwargs)
-            cat = 'text'
         item = TYPES[cat](item, workdir=self.workdir, **kwargs)
         if cat == 'slide':
             self.items.append(item)
@@ -492,62 +543,6 @@ class Worknote(NoteContainer):
             text += item.get_text(style)
         text += self.foot[style]
         return text
-
-def value(var, precision = 3, desc = None, units = None, **kwargs):
-    """
-    Return a nice representation of a numeric variable
-
-    Args
-    ----
-    precision : int
-        Floating point number precision
-    desc : str
-        A descriptive string to print in front of the value. If None, no
-        description is printed.
-    units : str
-        A string containing the units of the variable. If None, no units are
-        printed.
-    """
-    import numpy
-    if type(var) in [int, numpy.int64]:
-        res = u'{var:d}'.format(var = var)
-        res = '\\texttt{' + res + '}'
-        if not desc is None:
-            res = set_unicode(desc) + ': ' + res
-        if not units is None:
-            res += ' ' + '$' + set_unicode(units) + '$'
-        return res + '\\\\'
-    elif type(var) in [float, numpy.float64]:
-        if numpy.ceil(numpy.log10(var)) < 0 and \
-            abs(numpy.ceil(numpy.log10(var))) >= precision:
-            outfmt = 'e'
-        else:
-            outfmt = 'f'
-        fmtstr = u'{var:0.' + str(int(precision)) + outfmt + '}'
-        res = fmtstr.format(var = var)
-        res = '\\texttt{' + res + '}'
-        if not desc is None:
-            res = set_unicode(desc) + ': ' + res
-        if not units is None:
-            res += ' ' + '$' + format_units(units) + '$'
-        return res + '\\\\\n'
-    else:
-        return var
-
-def format_units(string):
-    import re
-    expr = '[a-zA-Z]+'
-    res = u''
-    while True:
-        match = re.search(expr, string)
-        if match:
-            res += string[:match.start()]
-            res += '\\mathsf{' + set_unicode(match.group(0)) + '}'
-            string = string[match.end():]
-        else:
-            res += string
-            break
-    return res
 
 def set_unicode(text):
     """
