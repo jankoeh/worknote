@@ -8,9 +8,7 @@ Example
 
 ```python
 from worknotes import Worknote
-wn = Worknote("./test")
-wn = Worknote("./test")
-wn.set_metadata(title = 'Test Worknotes', author = 'John Doe mit ö', date = '\\today')
+wn = Worknote("./test", title='Test Worknotes', author='Author', date='\\today')
 wn("First slide title", cat='slide')
 wn("The Problem we want to solve:", cat='text')
 wn("f=\sqrt{x}", cat='equation')
@@ -38,6 +36,24 @@ wn.build_pdf()
 wn.save()
 ```
 
+Item categories
+---------------
+Item can be added via `wn(item, cat=category)`, where wn is a `Worknote` object, the item is the object to pass to the worknote and the category is a descriptive string. If no category is given, the Worknote tries to determine the category from implicit declarations of the item object. E.g. `wn("  * Listitem")` is equivalent to `wn('Listitem', cat='list')`.
+
+The following categories are available:
+
+  * 'slide' - A slide or section of the worknote, implicit via "Your Title \n---"
+  * 'text' - A text string, no implicit declaration necessary
+  * 'equation' - An equation, implicit via "$$ your equation $$"
+  * 'list' - An item of a list, implicit via "  * Your item"
+  * 'figure' - A figure, implicit via passing a matplotlib figure, or passing the filename of a figure with ending .pdf, .png, .jpg, .jpeg. 
+      - Argument: size - Size in textwidth, default = 1
+      - Argument: align - Alignment of figure, ('left', 'right', 'center', None), default = 'center'. If None is given as argument, no align environment ist specified and the figure will appear in line with other objects
+      - Argument: gfxfmt - output format for matplotlib figures, default = 'pdf'
+  * 'figurepage' - Same as 'figure', but forces figure on a new slide
+  * 'table' - A table, implicit via passing a list or a numpy array. Table object need to be a 2D list or array. If the first line contains a string, Ite is assumed to be the table description.
+  
+  
 Roadmap
 -------
 

@@ -35,7 +35,7 @@ ylabel("Intensity g s/Liter")
 wn("Slide implicite generation\n------------------")
 wn(gcf(), cat='figure', size=.9)
 wn("Slide with a list on it", cat='slide')
-wn('some ist item', cat='list')
+wn('some list item', cat='list')
 wn('  * implicit list declaration via "* "')
 wn("implicit declaration of text")
 #implicit declaration of a table

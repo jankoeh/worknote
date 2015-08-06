@@ -421,12 +421,18 @@ class Worknote(NoteContainer):
         title : str
         author : str
         date : str
-        """           
-        if not title is None:
+        """
+        if not 'title' in self.metadata: #initialize
+            self.metadata['title'] = ''
+        if not 'author' in self.metadata:
+            self.metadata['author'] = ''
+        if not 'data' in self.metadata:
+            self.metadata['data'] = ''
+        if title:         
             self.metadata['title'] = set_unicode(title)
-        if not author is None:
+        if author:
             self.metadata['author'] = set_unicode(author)
-        if not date is None:
+        if date:
             self.metadata['date'] = set_unicode(date) 
 
     def get_text(self, style='Beamer'):
@@ -438,11 +444,11 @@ class Worknote(NoteContainer):
         text = ""
         text += self.head[style]
         metadata_str = ""
-        if not self.metadata['title'] == '':
+        if self.metadata['title']:
             metadata_str += "\\title{" + self.metadata['title'] + "}\n"
-        if not self.metadata['author'] == '':
+        if self.metadata['author']:
             metadata_str += "\\author{" + self.metadata['author'] + "}\n"
-        if not self.metadata['date'] == '':
+        if self.metadata['date']:
             metadata_str += "\\date{" + self.metadata['date'] + "}\n"
         text = text.replace('%%%METADATA%%%', metadata_str)
         if not metadata_str == "":
