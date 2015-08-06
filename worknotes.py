@@ -110,7 +110,15 @@ class Equation(NoteItem):
         else:
             return "$$ {} $$".format(self.data)
             
-
+class Text(NoteItem):
+    """
+    An Equation
+    """
+    def get_text(self, style):
+        if style in ['Beamer', 'LaTeX']:
+            return self.data.replace("\n", "~\\\\\n")
+        else:
+            return self.data
 
         
 class Figure(NoteItem):
@@ -197,7 +205,7 @@ class Slide(NoteContainer):
 
 
 TYPES = {'slide' : Slide,
-         'text' : NoteItem,
+         'text' : Text,
          'equation' : Equation,
          'list' : ListItem,
          'figure' : Figure,
@@ -301,12 +309,9 @@ class Worknote(NoteContainer):
             if cat == None:
                 print "Item not added"
                 return
-            if cat in ['figure', 'figurepage'] and self.workdir is None:
-                print 'Cannot add figure until working directory is set'
-                return
-        if cat == 'text':
-            if item[-1] == '\n':
-                item = item[:-1] + '~\\\\\n'
+        if cat in ['figure', 'figurepage'] and self.workdir is None:
+            print 'Cannot add figure until working directory is set'
+            return
         if cat == 'numeric':
             item = value(item, **kwargs)
             cat = 'text'
