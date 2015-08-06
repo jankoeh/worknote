@@ -343,9 +343,13 @@ class Worknote(NoteContainer):
         Title of document
     author : str
         Author name
+    date : str
+        Date of document
+    subtitle : str
+        Document subtitle
     """
     def __init__(self, workdir = None, title='', author='', date = '',
-                 **kwargs):
+                 subtitle = '', **kwargs):
         super(Worknote, self).__init__(**kwargs)
         if 'load_if_used' in kwargs:
             load_if_used = kwargs.pop('load_if_used')
@@ -366,10 +370,11 @@ class Worknote(NoteContainer):
 \\usepackage[utf8]{inputenc}
 %%%METADATA%%%
 \\begin{document}
+%%%TITLEPAGE%%%
         """
         self.foot['Beamer'] = "\\end{document}"
-        self.metadata = {}
-        self.set_metadata(title, author, date)
+        self.metadata = Metadata()
+        self.set_metadata(title, author, date, subtitle)
 
     def add_item(self, item, cat=None, **kwargs):
         """
@@ -508,12 +513,73 @@ class Worknote(NoteContainer):
         author : str
         date : str
         """
+        self.metadata.set_metadata(title = title, author = author, date = date,
+                                   subtitle = subtitle)
+
+    def get_text(self, style='Beamer'):
+        """
+        Returns the ASCII tex string
+        """
+        if style not in self.head:
+            style = 'default'
+        text = ""
+        text += self.head[style]
+        text = text.replace('%%%METADATA%%%', self.metadata.get_metadata(style))
+        if not len(self.metadata) == 0:
+            text = text.replace('%%%TITLEPAGE%%%', self.metadata.get_titlepage(style))
+        else:
+            text = text.replace('%%%TITLEPAGE%%%', '')
+        for item in self.items:
+            text += item.get_text(style)
+        text += self.foot[style]
+        return text
+        
+class Metadata:
+    def __init__(self, title = '', author = '', date = '', subtitle = ''):
+        self.metadata = {}
+        self.title_formatter = {}
+        self.title_formatter['Beamer'] = '\\title{%s}\n'
+        self.subtitle_formatter = {}
+        self.subtitle_formatter['Beamer'] = '\\subtitle{%s}\n'
+        self.date_formatter = {}
+        self.date_formatter['Beamer'] = '\\date{%s}\n'
+        self.author_formatter = {}
+        self.author_formatter['Beamer'] = '\\author{%s}\n'
+        self.titlepage_generator = {}
+        self.titlepage_generator['Beamer'] = "\\frame[plain]{\\titlepage}\n"
+        self.set_metadata(title = title, author = author, date = date, 
+                          subtitle = subtitle)
+    def get_metadata(self, style):
+        metadata_str = ""
+        if self.metadata['title']:
+            metadata_str += self.title_formatter[style]%self.metadata['title']
+        if self.metadata['subtitle']:
+            metadata_str += self.subtitle_formatter[style]%self.metadata['subtitle']
+        if self.metadata['date']:
+            metadata_str += self.date_formatter[style]%self.metadata['date']
+        if self.metadata['author']:
+            metadata_str += self.author_formatter[style]%self.metadata['author']
+        return metadata_str
+    def get_titlepage(self, style):
+        return self.titlepage_generator[style]
+    def set_metadata(self, title = "", author = "", date = "", subtitle = ""):
+        """
+        Set the metadata used to generate a title page, if any is present.
+        Set any field to an empty string ('') to remove it from output.
+        Pass None for any field to keep current value.
+
+        Args
+        ----
+        title : str
+        author : str
+        date : str
+        """
         if not 'title' in self.metadata: #initialize
             self.metadata['title'] = ''
         if not 'author' in self.metadata:
             self.metadata['author'] = ''
         if not 'date' in self.metadata:
-            self.metadata['data'] = ''
+            self.metadata['date'] = ''
         if not 'subtitle' in self.metadata:
             self.metadata['subtitle'] = ''
         if title:
@@ -524,32 +590,13 @@ class Worknote(NoteContainer):
             self.metadata['date'] = set_unicode(date)
         if subtitle:
             self.metadata['subtitle'] = set_unicode(subtitle)
-
-    def get_text(self, style='Beamer'):
-        """
-        Returns the ASCII tex string
-        """
-        if style not in self.head:
-            style = 'default'
-        text = ""
-        text += self.head[style]
-        metadata_str = ""
-        if self.metadata['title']:
-            metadata_str += "\\title{" + self.metadata['title'] + "}\n"
-        if self.metadata['author']:
-            metadata_str += "\\author{" + self.metadata['author'] + "}\n"
-        if self.metadata['date']:
-            metadata_str += "\\date{" + self.metadata['date'] + "}\n"
-        if self.metadata['subtitle']:
-            metadata_str += "\\subtitle{" + self.metadata['subtitle'] + "}\n"
-        text = text.replace('%%%METADATA%%%', metadata_str)
-        if not metadata_str == "":
-            text += "\\frame[plain]{\\titlepage}\n"
-        for item in self.items:
-            text += item.get_text(style)
-        text += self.foot[style]
-        return text
-
+    def __len__(self):
+        len = 0
+        for key in self.metadata:
+            if self.metadata[key]:
+                len += 1
+        return len
+        
 def set_unicode(text):
     """
     Return unicode string
