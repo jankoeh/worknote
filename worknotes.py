@@ -139,7 +139,7 @@ class Text(NoteItem):
             return self.data.replace("\n", "~\\\\\n")
         else:
             return self.data
-
+            
 class Value(NoteItem):
     """
     A numerical value with units and a description
@@ -397,6 +397,9 @@ class Worknote(NoteContainer):
                 return
         if cat in ['figure', 'figurepage'] and self.workdir is None:
             print 'Cannot add figure until working directory is set'
+            return
+        if not cat in TYPES:
+            print 'ERROR: Unknown category specified'
             return
         item = TYPES[cat](item, workdir=self.workdir, **kwargs)
         if cat == 'slide':
