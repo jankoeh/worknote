@@ -147,9 +147,9 @@ class Value(NoteItem):
     def __init__(self, var, precision = 3, desc = None, units = None,
                  **kwargs):
         self.var = var
-        self.precision = precision
-        self.desc = desc
-        self.units = units
+        self.precision = int(precision)
+        self.desc = set_unicode(desc)
+        self.units = set_unicode(units)
         self.units_wrapper = {}
         self.units_wrapper['Beamer'] = '$%s$'
         self.unit_formatter = {}
@@ -166,7 +166,7 @@ class Value(NoteItem):
                 outfmt = 'e'
             else:
                 outfmt = 'f'
-            fmtstr = u'{var:0.' + str(int(self.precision)) + outfmt + '}'
+            fmtstr = u'{var:0.' + str(self.precision) + outfmt + '}'
             res = fmtstr.format(var = self.var)
         res = self.value_formatter[style]%res
         if not self.desc is None:
@@ -183,7 +183,7 @@ class Value(NoteItem):
             match = re.search(expr, string)
             if match:
                 res += string[:match.start()]
-                res += self.unit_formatter[style]%set_unicode(match.group(0))
+                res += self.unit_formatter[style]%match.group(0)
                 string = string[match.end():]
             else:
                 res += string
