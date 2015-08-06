@@ -53,13 +53,14 @@ The following categories are available:
   * 'figurepage' - Same as 'figure', but forces figure on a new slide
   * 'table' - A table, implicit via passing a list or a numpy array. Table object need to be a 2D list or array. If the first line contains a string, Ite is assumed to be the table description.
   
+If a numeric variable (type int, int64, float, float64) gets passed, the variable's value will be printed. There are 3 additional optional arguments available:
+
+ * desc - A description of the variable. Gets printed in front of the value, followed by a colon.
+ * units - The units of the variable. Gets printed behind the value.
+ * precision - The precision of the floating point output (ignored for integer variables). If the value is too small to be represented in the chosen precision, the value is automatically printed in scientific notation.
+ 
   
 Roadmap
 -------
 
-  * ~~bUild pdf functionality~~  Can be used with pdflatex
-  * Support multiple formats, such as LaTex reports, Markdown, HTML
-  * ~~Figure item to handle naming~~ Done
-  * ~~Save Worknote as pickle?~~ Done
-  * ~~Make helper function for getting a pretty value printout for variables~~ ~~Not doing that anymore, we are implementing it differently~~ Done
-  * ~~Handle metadata and, if metadata present, add title page (So far, can only be set via ```Worknote.__init__()``` and is ignored apart from saving and loading)~~ Done
+See the issues and milestones for features to be implemented.
