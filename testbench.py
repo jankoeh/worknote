@@ -46,7 +46,7 @@ wn(pi, precision = 5, desc = 'More precise value of pi')
 wn('We can also automatically handle values smaller than the precision...\\\\\n')
 wn(pi/1e8, desc = 'A really small value')
 wn('... as well as units:\\\\\n')
-wn(9.81, desc = 'Earth gravity acceleration', units = 'm/s^2')
+wn(9.81, desc = 'Earth gravity acceleration', units = 'm/s^2', precision = 2)
 wn.build_pdf()   #build function to be implemented , see ./test/beamer.tex
 wn1_output = wn.get_text()
 wn.save()

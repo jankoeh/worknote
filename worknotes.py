@@ -494,10 +494,25 @@ def value(var, precision = 3, desc = None, units = None, **kwargs):
         if not desc is None:
             res = set_unicode(desc) + ': ' + res
         if not units is None:
-            res += ' ' + '$' + set_unicode(units) + '$'
+            res += ' ' + '$' + format_units(units) + '$'
         return res + '\\\\\n'
     else:
         return var
+
+def format_units(string):
+    import re
+    expr = '[a-zA-Z]+'
+    res = u''
+    while True:
+        match = re.search(expr, string)
+        if match:
+            res += string[:match.start()]
+            res += '\\mathsf{' + set_unicode(match.group(0)) + '}'
+            string = string[match.end():]
+        else:
+            res += string
+            break
+    return res
 
 def set_unicode(text):
     """
