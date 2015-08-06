@@ -351,11 +351,6 @@ class Worknote(NoteContainer):
     def __init__(self, workdir = None, title='', author='', date = '',
                  subtitle = '', **kwargs):
         super(Worknote, self).__init__(**kwargs)
-        if 'load_if_used' in kwargs:
-            load_if_used = kwargs.pop('load_if_used')
-        else:
-            load_if_used = True
-        self.set_workdir(workdir, load_if_used = load_if_used)
         self.head['Beamer'] = """
 \\documentclass{beamer}
 \\mode<presentation>
@@ -375,6 +370,11 @@ class Worknote(NoteContainer):
         self.foot['Beamer'] = "\\end{document}"
         self.metadata = Metadata()
         self.set_metadata(title, author, date, subtitle)
+        if 'load_if_used' in kwargs:
+            load_if_used = kwargs.pop('load_if_used')
+        else:
+            load_if_used = True
+        self.set_workdir(workdir, load_if_used = load_if_used)
 
     def add_item(self, item, cat=None, **kwargs):
         """
@@ -500,7 +500,12 @@ class Worknote(NoteContainer):
             self.foot = cPickle.load(infile)
             self.items = cPickle.load(infile)
             self.metadata = cPickle.load(infile)
-
+        if type(self.metadata) == dict:
+            print 'WARNING: Converting metadata from old format'
+            print '\tPlease check the metadata for correctness after loading'
+            old_md = self.metadata
+            self.metadata = Metadata(**old_md)
+                
     def set_metadata(self, title = "", author = "", date = "", subtitle = ""):
         """
         Set the metadata used to generate a title page, if any is present.
