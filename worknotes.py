@@ -304,6 +304,9 @@ class Worknote(NoteContainer):
             if cat in ['figure', 'figurepage'] and self.workdir is None:
                 print 'Cannot add figure until working directory is set'
                 return
+        if cat == 'text':
+            if item[-1] == '\n':
+                item = item[:-1] + '~\\\\\n'
         if cat == 'numeric':
             item = value(item, **kwargs)
             cat = 'text'
