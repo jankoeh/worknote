@@ -48,6 +48,11 @@ wn(pi/1e8, desc = 'A really small value')
 wn('... as well as units:\n')
 wn(9.81, desc = 'Earth gravity acceleration', units = 'm/s^2', precision = 2)
 wn('And we break automatically after a text line...\n And continue ...')
+wn("Demonstrating enumerated lists", cat='slide')
+wn("My first point", cat='enumerate')
+wn("  # My second point")
+wn("# My third point")
+
 wn.build_pdf()   #build function to be implemented , see ./test/beamer.tex
 wn1_output = wn.get_text()
 wn.save()

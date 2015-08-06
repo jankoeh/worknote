@@ -22,21 +22,21 @@ class NoteItem(object):
         """
         return set_unicode(data)
     def __str__(self):
-        return self.__class__.__name__ 
+        return self.__class__.__name__
     def __call__(self, item, **kwargs):
         self.add_item(item, **kwargs)
-        
+
 class NoteContainer(NoteItem):
     """
     Base class for all TeX objects
-    
+
     Args
     ----
     style : dict
         dict containing format tags
     """
     def __init__(self, **kwargs):
-        super(NoteContainer, self).__init__(**kwargs)  
+        super(NoteContainer, self).__init__(**kwargs)
         self.head = {'default' : ''}
         self.foot = {'default' : ''}
         self.items = []
@@ -52,21 +52,21 @@ class NoteContainer(NoteItem):
         for item in self.items:
             text += item.get_text(style)
         text += self.foot[style]
-        return text        
+        return text
     def add_item(self, item):
         """
         Adds an item to the items list
-        
+
         Args
         ----
         item : NoteItem
             subitem to add to
         **kwargs : keyowrd arguments
-            Args like figsize etc            
+            Args like figsize etc
         """
-        self.items.append(item)   
+        self.items.append(item)
     def __str__(self):
-        text =  self.__class__.__name__ 
+        text =  self.__class__.__name__
         for item in self.items:
             text += "\n"+str(item)
         return text
@@ -77,14 +77,34 @@ class List(NoteContainer):
     The List environment
     """
     def __init__(self, **kwargs):
-        super(List, self).__init__(**kwargs)        
+        super(List, self).__init__(**kwargs)
         self.head['Beamer'] = '\\begin{itemize}\n'
         self.foot['Beamer'] = '\\end{itemize}\n'
+
+class Enumerate(NoteContainer):
+    """
+    Enumerated list environment
+    """
+    def __init__(self, **kwargs):
+        super(Enumerate, self).__init__(**kwargs)
+        self.head['Beamer'] = '\\begin{enumerate}\n'
+        self.foot['Beamer'] = '\\end{enumerate}\n'
+
+class EnumItem(NoteItem):
+    def clean_data(self, data):
+        if data.strip()[:2] == "# ":
+            data = data.strip()[2:]
+        return set_unicode(data)
+    def get_text(self, style):
+        if style in ['Beamer', 'LaTeX']:
+            return "\\item {} \n".format(self.data)
+        else: #Other styles need ne be handled by enumerate as well
+            return "  - {} \n".format(self.data)
 
 class ListItem(NoteItem):
     def clean_data(self, data):
         if data.strip()[:2] == "* ":
-            data = data.strip()[2:] 
+            data = data.strip()[2:]
         return set_unicode(data)
     def get_text(self, style):
         if style in ['Beamer', 'LaTeX']:
@@ -95,7 +115,7 @@ class ListItem(NoteItem):
             print "Defaulting to Markdown"
             return "  * {} \n".format(self.data)
 
-        
+
 class Equation(NoteItem):
     """
     An Equation
@@ -109,7 +129,7 @@ class Equation(NoteItem):
             return "$$ {} $$".format(self.data)
         else:
             return "$$ {} $$".format(self.data)
-            
+
 class Text(NoteItem):
     """
     An Equation
@@ -120,7 +140,7 @@ class Text(NoteItem):
         else:
             return self.data
 
-        
+
 class Figure(NoteItem):
     """
     A Figure
@@ -175,7 +195,7 @@ class Table(NoteItem):
 class Slide(NoteContainer):
     """
     One Slide of a Worknote
-    
+
     """
     def __init__(self, title, **kwargs):
         super(Slide, self).__init__(**kwargs)
@@ -191,14 +211,18 @@ class Slide(NoteContainer):
              title.split("\n")[1][:3] == '---':
             title = title.split("\n")[0]
         return title
-        
+
     def add_item(self, item, **kwargs):
         """
         Adds an item to slide
         """
-        if type(item) == ListItem:
+        if type(item) == ListItem: # Handle Lists
             if len(self.items)==0 or type(self.items[-1]) != List:
                 self.items.append(List(**kwargs))
+            self.items[-1].add_item(item)
+        elif type(item) == EnumItem: # Handle enumerated Lists
+            if len(self.items)==0 or type(self.items[-1]) != Enumerate:
+                self.items.append(Enumerate(**kwargs))
             self.items[-1].add_item(item)
         else:
             self.items.append(item)
@@ -208,6 +232,7 @@ TYPES = {'slide' : Slide,
          'text' : Text,
          'equation' : Equation,
          'list' : ListItem,
+         'enumerate' : EnumItem,
          'figure' : Figure,
          'figurepage': Figure,
          'table' : Table}
@@ -215,12 +240,12 @@ TYPES = {'slide' : Slide,
 def find_category(item):
     """
     Determines item category from item type and content
-    
+
     Args
     ----
     item : arbitrary
         Arbitrary valid item
-    
+
     Returns
     -------
     cat : str
@@ -236,6 +261,8 @@ def find_category(item):
             cat = 'equation'
         elif item.strip()[:2] == "* ":
             cat = 'list'
+        elif item.strip()[:2] == "# ":
+            cat = 'enumerate'
         elif len(item.split("\n"))==2 and \
             len(item.split("\n")[1])>=3 and \
             item.split("\n")[1][:3] == '---':
@@ -252,12 +279,12 @@ def find_category(item):
         print "Category of item not recognized: %s"%type(item)
         cat = None
     return cat
-        
+
 class Worknote(NoteContainer):
     """
-    Class That allows to drop comments in figures into a presentation while 
+    Class That allows to drop comments in figures into a presentation while
     interactively working with python
-    
+
     Args
     ----
     workdir : str
@@ -265,7 +292,7 @@ class Worknote(NoteContainer):
     title : str
         Title of document
     author : str
-        Author name           
+        Author name
     """
     def __init__(self, workdir = None, title='', author='', date = '',
                  **kwargs):
@@ -278,7 +305,7 @@ class Worknote(NoteContainer):
   \\usetheme{Boadilla}
   %\\usetheme{Pittsburgh}
   %\\setbeamercovered{transparent}
-}        
+}
 \\setbeamertemplate{footline}[frame number]
 \\setbeamertemplate{navigation symbols}{}
 \\usepackage[english]{babel}
@@ -288,18 +315,18 @@ class Worknote(NoteContainer):
         """
         self.foot['Beamer'] = "\\end{document}"
         self.metadata = {}
-        self.set_metadata(title, author, date)          
+        self.set_metadata(title, author, date)
 
     def add_item(self, item, cat=None, **kwargs):
         """
         Adds an item to the last slide
-        
+
         Args
         ----
         items : various
             item to add to slide, can be str, fig, ...
         cat : str
-            Category of item. If none is given, it will be determined 
+            Category of item. If none is given, it will be determined
             through the type function
         **kwargs : keyowrd arguments
             Args like figsize etc
@@ -323,17 +350,17 @@ class Worknote(NoteContainer):
             self.items[-1].add_item(item)
         else:
             self.items[-1].add_item(item)
-            
+
     def __call__(self, item, cat=None, **kwargs):
-        self.add_item(item, cat, **kwargs)            
-            
+        self.add_item(item, cat, **kwargs)
+
     def build_pdf(self, style='Beamer'):
         from os import path
         import codecs
-        f_out = codecs.open(path.join(self.workdir, style+".tex"), 'w', 
-                            encoding='utf-8') 
+        f_out = codecs.open(path.join(self.workdir, style+".tex"), 'w',
+                            encoding='utf-8')
         f_out.write(self.get_text(style=style))
-        f_out.close()       
+        f_out.close()
         print "Building pdf"
         from subprocess import call
         build = call(["pdflatex", style+".tex"], cwd=self.workdir)
@@ -342,13 +369,13 @@ class Worknote(NoteContainer):
         else:
             print "Errors encountered during build"
             print "Check %s for problems"%path.join(self.workdir, style+".tex")
-        
+
     def set_workdir(self, workdir, load_if_used = False):
         """
-        Set the working directory. If load_if_used is True or there are no 
+        Set the working directory. If load_if_used is True or there are no
         items in the current notes, any worknotes present in the directory will
         automatically be loaded.
-        
+
         Args
         ----
         workdir : str
@@ -375,7 +402,7 @@ class Worknote(NoteContainer):
             print 'WARNING: No working directory set'
             print '\tUnable to save or add figures'
             self.workdir = None
-            
+
     def save(self):
         """
         Save the worknotes to the working directory
@@ -388,11 +415,11 @@ class Worknote(NoteContainer):
             cPickle.dump(self.foot, outfile, cPickle.HIGHEST_PROTOCOL)
             cPickle.dump(self.items, outfile, cPickle.HIGHEST_PROTOCOL)
             cPickle.dump(self.metadata, outfile, cPickle.HIGHEST_PROTOCOL)
-    
+
     def load(self, workdir = None, verbosity = 0):
         """
         Load the worknotes from a working directory
-        
+
         Args
         ----
         workdir : str
@@ -417,13 +444,13 @@ class Worknote(NoteContainer):
             self.foot = cPickle.load(infile)
             self.items = cPickle.load(infile)
             self.metadata = cPickle.load(infile)
-            
+
     def set_metadata(self, title = "", author = "", date = ""):
         """
         Set the metadata used to generate a title page, if any is present.
         Set any field to an empty string ('') to remove it from output.
         Pass None for any field to keep current value.
-        
+
         Args
         ----
         title : str
@@ -436,12 +463,12 @@ class Worknote(NoteContainer):
             self.metadata['author'] = ''
         if not 'data' in self.metadata:
             self.metadata['data'] = ''
-        if title:         
+        if title:
             self.metadata['title'] = set_unicode(title)
         if author:
             self.metadata['author'] = set_unicode(author)
         if date:
-            self.metadata['date'] = set_unicode(date) 
+            self.metadata['date'] = set_unicode(date)
 
     def get_text(self, style='Beamer'):
         """
@@ -464,21 +491,21 @@ class Worknote(NoteContainer):
         for item in self.items:
             text += item.get_text(style)
         text += self.foot[style]
-        return text        
+        return text
 
 def value(var, precision = 3, desc = None, units = None, **kwargs):
     """
     Return a nice representation of a numeric variable
-    
+
     Args
     ----
     precision : int
         Floating point number precision
     desc : str
-        A descriptive string to print in front of the value. If None, no 
+        A descriptive string to print in front of the value. If None, no
         description is printed.
     units : str
-        A string containing the units of the variable. If None, no units are 
+        A string containing the units of the variable. If None, no units are
         printed.
     """
     import numpy
@@ -525,12 +552,12 @@ def format_units(string):
 def set_unicode(text):
     """
     Return unicode string
-    
+
     Args:
-    -----    
+    -----
     text : str, unicode
-        Text can be string or unicode    
-    
+        Text can be string or unicode
+
     Returns
     -------
     text : unicode
@@ -538,4 +565,4 @@ def set_unicode(text):
     if type(text) == str:
         text = unicode(text, 'utf-8')
     return text
-    
+
