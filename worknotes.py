@@ -496,7 +496,7 @@ class Worknote(NoteContainer):
             self.items = cPickle.load(infile)
             self.metadata = cPickle.load(infile)
 
-    def set_metadata(self, title = "", author = "", date = ""):
+    def set_metadata(self, title = "", author = "", date = "", subtitle = ""):
         """
         Set the metadata used to generate a title page, if any is present.
         Set any field to an empty string ('') to remove it from output.
@@ -512,14 +512,18 @@ class Worknote(NoteContainer):
             self.metadata['title'] = ''
         if not 'author' in self.metadata:
             self.metadata['author'] = ''
-        if not 'data' in self.metadata:
+        if not 'date' in self.metadata:
             self.metadata['data'] = ''
+        if not 'subtitle' in self.metadata:
+            self.metadata['subtitle'] = ''
         if title:
             self.metadata['title'] = set_unicode(title)
         if author:
             self.metadata['author'] = set_unicode(author)
         if date:
             self.metadata['date'] = set_unicode(date)
+        if subtitle:
+            self.metadata['subtitle'] = set_unicode(subtitle)
 
     def get_text(self, style='Beamer'):
         """
@@ -536,6 +540,8 @@ class Worknote(NoteContainer):
             metadata_str += "\\author{" + self.metadata['author'] + "}\n"
         if self.metadata['date']:
             metadata_str += "\\date{" + self.metadata['date'] + "}\n"
+        if self.metadata['subtitle']:
+            metadata_str += "\\subtitle{" + self.metadata['subtitle'] + "}\n"
         text = text.replace('%%%METADATA%%%', metadata_str)
         if not metadata_str == "":
             text += "\\frame[plain]{\\titlepage}\n"

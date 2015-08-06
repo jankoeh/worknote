@@ -24,7 +24,8 @@ plot(arange(10))
 
 from worknotes import Worknote
 wn = Worknote("./test")
-wn.set_metadata(title = 'Test Worknotes', author = 'John Doe mit ö', date = '\\today')
+wn.set_metadata(title = 'Worknotes', author = 'John Doe mit ö', 
+                date = '\\today', subtitle="The story of an awesome toolkit")
 wn("First slide title with unicode ü", cat='slide')
 wn("The Problem we want to solve:", cat='text')
 wn("f=\sqrt{x}", cat='equation')
