@@ -80,8 +80,12 @@ class List(NoteContainer):
         super(List, self).__init__(**kwargs)
         self.head['Beamer'] = '\\begin{itemize}\n'
         self.foot['Beamer'] = '\\end{itemize}\n'
-
-class Enumerate(NoteContainer):
+    def __str__(self):
+        text = self.__class__.__name__
+        for i in xrange(len(self.items)):
+            text += "\n    %d %s"%(i, self.items[i])      
+        return text
+class Enumerate(List):
     """
     Enumerated list environment
     """
@@ -257,6 +261,7 @@ class Slide(NoteContainer):
     def __init__(self, title, **kwargs):
         super(Slide, self).__init__(**kwargs)
         title = self.clean_data(title)
+        self.title = title
         self.head['Beamer'] = "\\frame{\\frametitle{%s}\n"%title
         self.foot['Beamer'] = '}\n'
         self.head['Markdown'] = "{}\n".format(title) + "-"*len(title)+"\n"
@@ -283,7 +288,11 @@ class Slide(NoteContainer):
             self.items[-1].add_item(item)
         else:
             self.items.append(item)
-
+    def __str__(self):
+        text = "Slide" #+ self.title
+        for i in xrange(len(self.items)):
+            text += "\n  %d %s"%(i, self.items[i])
+        return text
 
 TYPES = {'slide' : Slide,
          'text' : Text,
@@ -573,6 +582,12 @@ class Worknote(NoteContainer):
         text += self.foot[style]
         return text
 
+    def __str__(self):
+        text = u"Worknote: " + str(self.metadata)
+        for i in xrange(len(self.items)):
+            text += "\n%d %s"%(i, self.items[i].__str__())
+        return text
+
 class Metadata(object):
     """
     Class to handle metadata
@@ -652,6 +667,10 @@ class Metadata(object):
             if self.metadata[key]:
                 len += 1
         return len
+    def __str__(self):
+        if 'title' in self.metadata:
+            return self.metadata['title']
+        return ""
 
 def set_unicode(text):
     """
