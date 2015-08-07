@@ -421,26 +421,47 @@ class Worknote(NoteContainer):
     def __call__(self, item, cat=None, **kwargs):
         self.add_item(item, cat, **kwargs)
 
+    def build(self, style='Beamer'):
+        """
+        Generate output in a given style
+        Argument style is currently unused and default Beamer
+        
+        Args
+        ----
+        style : str
+            Build format (default = 'Beamer'). Options are:
+              * 'Beamer' - Build Beamer.tex  and generate Beamer.pdf
+              * 'Beamer.tex' - Build Beamer.tex
+              * More to come!
+        """
+        from os import path
+        import codecs
+        build_pdf = True
+        if style[-4:] == '.tex':
+            build_pdf = False
+            style = style[:-4]
+        f_out = codecs.open(path.join(self.workdir, style+".tex"), 'w',
+                            encoding='utf-8')
+        f_out.write(self.get_text(style=style))
+        f_out.close()
+        if build_pdf:
+            print "Building pdf"
+            from subprocess import call
+            build = call(["pdflatex", style+".tex"], cwd=self.workdir)
+            if build == 0:
+                print "Building sucessful: %s"%path.join(self.workdir, style+".pdf")
+            else:
+                print "Errors encountered during build"
+                print "Check %s for problems"%path.join(self.workdir, style+".tex")
+
     def build_pdf(self, style='Beamer'):
         """
         Generate output in a given style
         Argument style is currently unused and default Beamer
         """
-        from os import path
-        import codecs
-        f_out = codecs.open(path.join(self.workdir, style+".tex"), 'w',
-                            encoding='utf-8')
-        f_out.write(self.get_text(style=style))
-        f_out.close()
-        print "Building pdf"
-        from subprocess import call
-        build = call(["pdflatex", style+".tex"], cwd=self.workdir)
-        if build == 0:
-            print "Building sucessful: %s"%path.join(self.workdir, style+".pdf")
-        else:
-            print "Errors encountered during build"
-            print "Check %s for problems"%path.join(self.workdir, style+".tex")
-
+        print "Deprecated! Use build() instead of build_pdf()"
+        self.build(style)
+        
     def set_workdir(self, workdir, load_if_used=False):
         """
         Set the working directory. If load_if_used is True or there are no

@@ -53,7 +53,7 @@ wn("Demonstrating enumerated lists", cat='slide')
 wn("My first point", cat='enumerate')
 wn("  # My second point")
 wn("# My third point")
-wn.build_pdf()   #build function to be implemented , see ./test/beamer.tex
+wn.build()   #build function to be implemented , see ./test/beamer.tex
 wn1_output = wn.get_text()
 wn.save()
 
