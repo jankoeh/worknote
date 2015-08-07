@@ -6,8 +6,10 @@ Created on Fri Jul 31 11:09:57 2015
 """
 from __future__ import unicode_literals
 
-
 class NoteItem(object):
+    """
+    Base Class which stores - reformats and returns data
+    """
     def __init__(self, data='', **kwargs):
         self.kwargs = kwargs
         self.data = self.clean_data(data)
@@ -23,8 +25,6 @@ class NoteItem(object):
         return set_unicode(data)
     def __str__(self):
         return self.__class__.__name__
-    def __call__(self, item, **kwargs):
-        self.add_item(item, **kwargs)
 
 class NoteContainer(NoteItem):
     """
@@ -66,7 +66,7 @@ class NoteContainer(NoteItem):
         """
         self.items.append(item)
     def __str__(self):
-        text =  self.__class__.__name__
+        text = self.__class__.__name__
         for item in self.items:
             text += "\n"+str(item)
         return text
@@ -91,17 +91,23 @@ class Enumerate(NoteContainer):
         self.foot['Beamer'] = '\\end{enumerate}\n'
 
 class EnumItem(NoteItem):
+    """
+    Item of an enumerated list
+    """
     def clean_data(self, data):
         if data.strip()[:2] == "# ":
             data = data.strip()[2:]
         return set_unicode(data)
-    def get_text(self, style):
+    def get_text(self, style="Beamer"):
         if style in ['Beamer', 'LaTeX']:
             return "\\item {} \n".format(self.data)
         else: #Other styles need ne be handled by enumerate as well
             return "  - {} \n".format(self.data)
 
 class ListItem(NoteItem):
+    """
+    Item of a List
+    """
     def clean_data(self, data):
         if data.strip()[:2] == "* ":
             data = data.strip()[2:]
@@ -122,7 +128,7 @@ class Equation(NoteItem):
     """
     def clean_data(self, data):
         data = set_unicode(data)
-        data =  data.strip().strip("$$")
+        data = data.strip().strip("$$")
         return data
     def get_text(self, style):
         if style in ['Beamer', 'LaTeX']:
@@ -139,13 +145,12 @@ class Text(NoteItem):
             return self.data.replace("\n", "~\\\\\n")
         else:
             return self.data
-            
+
 class Value(NoteItem):
     """
     A numerical value with units and a description
     """
-    def __init__(self, var, precision = 3, desc = None, units = None,
-                 **kwargs):
+    def __init__(self, var, precision=3, desc=None, units=None, **kwargs):
         self.var = var
         self.precision = int(precision)
         self.desc = set_unicode(desc)
@@ -159,7 +164,7 @@ class Value(NoteItem):
     def get_text(self, style):
         import numpy
         if type(self.var) in [int, numpy.int64]:
-            res = u'{var:d}'.format(var = self.var)
+            res = u'{var:d}'.format(var=self.var)
         elif type(self.var) in [float, numpy.float64]:
             if numpy.ceil(numpy.log10(self.var)) < 0 and \
                 abs(numpy.ceil(numpy.log10(self.var))) >= self.precision:
@@ -167,7 +172,7 @@ class Value(NoteItem):
             else:
                 outfmt = 'f'
             fmtstr = u'{var:0.' + str(self.precision) + outfmt + '}'
-            res = fmtstr.format(var = self.var)
+            res = fmtstr.format(var=self.var)
         res = self.value_formatter[style]%res
         if not self.desc is None:
             res = self.desc + ': ' + res
@@ -175,6 +180,9 @@ class Value(NoteItem):
             res += ' ' + self.units_wrapper[style]%self.format_units(style)
         return res + '\\\\\n'
     def format_units(self, style):
+        """
+        Formats units into proper style. E.g. m^2 -> \mathsf{m}^2
+        """
         import re
         string = self.units
         expr = '[a-zA-Z]+'
@@ -198,7 +206,7 @@ class Figure(NoteItem):
         self.workdir = workdir
         self.size = size
         self.gfxfmt = gfxfmt
-	self.align = align
+        self.align = align
         super(Figure, self).__init__(data, **kwargs)
     def clean_data(self, data):
         from os import path
@@ -209,10 +217,10 @@ class Figure(NoteItem):
         if type(data) == str:
             from shutil import copyfile
             fn_figure += '.' + path.splitext(path.basename(data))[1]
-            copyfile(data, path.join(self.workdir,fn_figure))
+            copyfile(data, path.join(self.workdir, fn_figure))
         else:
             fn_figure += '.' + self.gfxfmt
-            data.savefig(path.join(self.workdir,fn_figure))
+            data.savefig(path.join(self.workdir, fn_figure))
         return fn_figure
     def get_text(self, style):
         if style in ['Beamer', 'LaTeX']:
@@ -232,11 +240,11 @@ class Table(NoteItem):
             data = self.data
             table = "\\begin{center}\n\\begin{tabular}{%s}\n \\hline\n"%('c'*len(data[0]))
             if type(data[0][0]) in [str, unicode]:
-                table  += "&".join([str(i) for i in data[0]]) + "\\\\ \n \hline "
+                table += "&".join([str(i) for i in data[0]]) + "\\\\ \n \hline "
                 data = data[1:]
             for line in data:
-                table  += "&".join([str(i) for i in line]) + "\\\\ \n"
-            table +="\\hline \\hline\n \\end{tabular}\n\\end{center}\n"
+                table += "&".join([str(i) for i in line]) + "\\\\ \n"
+            table += "\\hline \\hline\n \\end{tabular}\n\\end{center}\n"
             return table
         else:
             return str(self.data)
@@ -255,8 +263,8 @@ class Slide(NoteContainer):
         self.foot['Markdown'] = "\n"
     def clean_data(self, title):
         title = set_unicode(title)
-        if len(title.split("\n"))==2 and \
-             len(title.split("\n")[1])>=3 and \
+        if len(title.split("\n")) == 2 and \
+             len(title.split("\n")[1]) >= 3 and \
              title.split("\n")[1][:3] == '---':
             title = title.split("\n")[0]
         return title
@@ -266,11 +274,11 @@ class Slide(NoteContainer):
         Adds an item to slide
         """
         if type(item) == ListItem: # Handle Lists
-            if len(self.items)==0 or type(self.items[-1]) != List:
+            if len(self.items) == 0 or type(self.items[-1]) != List:
                 self.items.append(List(**kwargs))
             self.items[-1].add_item(item)
         elif type(item) == EnumItem: # Handle enumerated Lists
-            if len(self.items)==0 or type(self.items[-1]) != Enumerate:
+            if len(self.items) == 0 or type(self.items[-1]) != Enumerate:
                 self.items.append(Enumerate(**kwargs))
             self.items[-1].add_item(item)
         else:
@@ -313,8 +321,8 @@ def find_category(item):
             cat = 'list'
         elif item.strip()[:2] == "# ":
             cat = 'enumerate'
-        elif len(item.split("\n"))==2 and \
-            len(item.split("\n")[1])>=3 and \
+        elif len(item.split("\n")) == 2 and \
+            len(item.split("\n")[1]) >= 3 and \
             item.split("\n")[1][:3] == '---':
             cat = 'slide'
         else:
@@ -348,8 +356,8 @@ class Worknote(NoteContainer):
     subtitle : str
         Document subtitle
     """
-    def __init__(self, workdir = None, title='', author='', date = '',
-                 subtitle = '', **kwargs):
+    def __init__(self, workdir=None, title='', author='', date='',
+                 subtitle='', **kwargs):
         super(Worknote, self).__init__(**kwargs)
         self.head['Beamer'] = """
 \\documentclass{beamer}
@@ -374,7 +382,7 @@ class Worknote(NoteContainer):
             load_if_used = kwargs.pop('load_if_used')
         else:
             load_if_used = True
-        self.set_workdir(workdir, load_if_used = load_if_used)
+        self.set_workdir(workdir, load_if_used=load_if_used)
 
     def add_item(self, item, cat=None, **kwargs):
         """
@@ -414,6 +422,10 @@ class Worknote(NoteContainer):
         self.add_item(item, cat, **kwargs)
 
     def build_pdf(self, style='Beamer'):
+        """
+        Generate output in a given style
+        Argument style is currently unused and default Beamer
+        """
         from os import path
         import codecs
         f_out = codecs.open(path.join(self.workdir, style+".tex"), 'w',
@@ -423,13 +435,13 @@ class Worknote(NoteContainer):
         print "Building pdf"
         from subprocess import call
         build = call(["pdflatex", style+".tex"], cwd=self.workdir)
-        if build==0:
+        if build == 0:
             print "Building sucessful: %s"%path.join(self.workdir, style+".pdf")
         else:
             print "Errors encountered during build"
             print "Check %s for problems"%path.join(self.workdir, style+".tex")
 
-    def set_workdir(self, workdir, load_if_used = False):
+    def set_workdir(self, workdir, load_if_used=False):
         """
         Set the working directory. If load_if_used is True or there are no
         items in the current notes, any worknotes present in the directory will
@@ -453,7 +465,7 @@ class Worknote(NoteContainer):
             else:
                 if exists(join(self.workdir, self.workdir + '.worknote')):
                     if load_if_used or len(self.items) == 0:
-                        self.load(verbosity = 1)
+                        self.load(verbosity=1)
                     else:
                         print 'WARNING:', self.workdir, 'is already in use.'
                         print '\tSaving will overwrite the saved content.'
@@ -475,7 +487,7 @@ class Worknote(NoteContainer):
             cPickle.dump(self.items, outfile, cPickle.HIGHEST_PROTOCOL)
             cPickle.dump(self.metadata, outfile, cPickle.HIGHEST_PROTOCOL)
 
-    def load(self, workdir = None, verbosity = 0):
+    def load(self, workdir=None, verbosity=0):
         """
         Load the worknotes from a working directory
 
@@ -491,9 +503,7 @@ class Worknote(NoteContainer):
         from os.path import join
         if self.workdir is None:
             if workdir is None:
-                from os import OSError
                 raise OSError('No working directory given')
-                return
             self.set_workdir(workdir)
         if verbosity > 0:
             print 'Loading from', self.workdir
@@ -508,8 +518,8 @@ class Worknote(NoteContainer):
             print '\tPlease check the metadata for correctness after loading'
             old_md = self.metadata
             self.metadata = Metadata(**old_md)
-                
-    def set_metadata(self, title = "", author = "", date = "", subtitle = ""):
+
+    def set_metadata(self, title="", author="", date="", subtitle=""):
         """
         Set the metadata used to generate a title page, if any is present.
         Set any field to an empty string ('') to remove it from output.
@@ -521,8 +531,8 @@ class Worknote(NoteContainer):
         author : str
         date : str
         """
-        self.metadata.set_metadata(title = title, author = author, date = date,
-                                   subtitle = subtitle)
+        self.metadata.set_metadata(title=title, author=author, date=date,
+                                   subtitle=subtitle)
 
     def get_text(self, style='Beamer'):
         """
@@ -541,9 +551,19 @@ class Worknote(NoteContainer):
             text += item.get_text(style)
         text += self.foot[style]
         return text
-        
-class Metadata:
-    def __init__(self, title = '', author = '', date = '', subtitle = ''):
+
+class Metadata(object):
+    """
+    Class to handle metadata
+
+    Args
+    ----
+    title : str
+    author : str
+    date : str
+    subtitle : str
+    """
+    def __init__(self, title='', author='', date='', subtitle=''):
         self.metadata = {}
         self.title_formatter = {}
         self.title_formatter['Beamer'] = '\\title{%s}\n'
@@ -555,9 +575,12 @@ class Metadata:
         self.author_formatter['Beamer'] = '\\author{%s}\n'
         self.titlepage_generator = {}
         self.titlepage_generator['Beamer'] = "\\frame[plain]{\\titlepage}\n"
-        self.set_metadata(title = title, author = author, date = date, 
-                          subtitle = subtitle)
+        self.set_metadata(title=title, author=author, date=date,
+                          subtitle=subtitle)
     def get_metadata(self, style):
+        """
+        Returns a proper formated metadata string
+        """
         metadata_str = ""
         if self.metadata['title']:
             metadata_str += self.title_formatter[style]%self.metadata['title']
@@ -569,8 +592,11 @@ class Metadata:
             metadata_str += self.author_formatter[style]%self.metadata['author']
         return metadata_str
     def get_titlepage(self, style):
+        """
+        Returns a properly formated titelpage string
+        """
         return self.titlepage_generator[style]
-    def set_metadata(self, title = "", author = "", date = "", subtitle = ""):
+    def set_metadata(self, title="", author="", date="", subtitle=""):
         """
         Set the metadata used to generate a title page, if any is present.
         Set any field to an empty string ('') to remove it from output.
@@ -581,6 +607,7 @@ class Metadata:
         title : str
         author : str
         date : str
+        subtitle : str
         """
         if not 'title' in self.metadata: #initialize
             self.metadata['title'] = ''
@@ -604,7 +631,7 @@ class Metadata:
             if self.metadata[key]:
                 len += 1
         return len
-        
+
 def set_unicode(text):
     """
     Return unicode string
