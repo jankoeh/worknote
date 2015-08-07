@@ -53,10 +53,13 @@ wn("Demonstrating enumerated lists", cat='slide')
 wn("My first point", cat='enumerate')
 wn("  # My second point")
 wn("# My third point")
+for i in [15, 18, 23, 34]:
+    wn("Test table sizes - %d lines"%i, cat='slide')
+    wn([['zahlen']+range(10)]*i, size='auto')
+
 wn.build()   #build function to be implemented , see ./test/beamer.tex
 wn1_output = wn.get_text()
 wn.save()
-
 wn2 = Worknote()
 wn2.load('./test')
 wn2_output = wn.get_text()

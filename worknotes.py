@@ -83,7 +83,7 @@ class List(NoteContainer):
     def __str__(self):
         text = self.__class__.__name__
         for i in xrange(len(self.items)):
-            text += "\n    %d %s"%(i, self.items[i])      
+            text += "\n    %d %s"%(i, self.items[i])
         return text
 class Enumerate(List):
     """
@@ -238,17 +238,45 @@ class Figure(NoteItem):
 class Table(NoteItem):
     """
     Pass a list (of lists) or a numpy 2D array as argument
+
+    Parameters
+    ----------
+    data : list or numpy.ndarray
+        2D list or array which contains lines and columns
+        If the first line contains a string - first line is assumed to be the
+        title
+    size : str
+        Can be an arbirary LaTeX fontsize (only relevant for LaTeX right now).
+        default='normalsize'. If set to 'auto', size is determined by table
+        length. This assumes an empty slide ...
     """
-    def get_text(self, style):
+    def __init__(self, data, size='normalsize', **kwargs):
+        super(Table, self).__init__(data, **kwargs)
+        if size not in ['tiny', 'scriptsize', 'footnotesize', 'small', 'normalsize',
+                        'large', 'Large', 'LARGE', 'huge',  'Huge', 'auto']:
+            print "Fontsize not recognized, defaulting to autosize"
+            size = 'auto'
+        self.size = size
+    def get_text(self, style, size='normalsize'):
         if style in ['Beamer', 'LaTeX']:
+            if self.size == 'auto':
+                size = 'tiny'
+                if len(self.data)<25:
+                    size = 'scriptsize'
+                if len(self.data)<22:
+                    size = 'footnotesize'
+                if len(self.data)<18:
+                    size = 'normalsize'
             data = self.data
-            table = "\\begin{center}\n\\begin{tabular}{%s}\n \\hline\n"%('c'*len(data[0]))
-            if type(data[0][0]) in [str, unicode]:
+            table = "\n\\begin{center}\n\\begin{%s}\n"%size
+            table +="\\begin{tabular}{%s}\n \\hline\n"%('c'*len(data[0]))
+            if len(data[0])>1 and type(data[0][1]) in [str, unicode]:
                 table += "&".join([str(i) for i in data[0]]) + "\\\\ \n \hline "
                 data = data[1:]
             for line in data:
                 table += "&".join([str(i) for i in line]) + "\\\\ \n"
-            table += "\\hline \\hline\n \\end{tabular}\n\\end{center}\n"
+            table += "\\hline \\hline\n \\end{tabular}\n"
+            table += "\\end{%s}\n\\end{center}\n"%size
             return table
         else:
             return str(self.data)
@@ -434,7 +462,7 @@ class Worknote(NoteContainer):
         """
         Generate output in a given style
         Argument style is currently unused and default Beamer
-        
+
         Args
         ----
         style : str
@@ -470,7 +498,7 @@ class Worknote(NoteContainer):
         """
         print "Deprecated! Use build() instead of build_pdf()"
         self.build(style)
-        
+
     def set_workdir(self, workdir, load_if_used=False):
         """
         Set the working directory. If load_if_used is True or there are no

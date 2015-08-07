@@ -55,6 +55,8 @@ The following categories are available:
       - Argument: gfxfmt - output format for matplotlib figures, default = 'pdf'
   * **figurepage** - Same as 'figure', but forces figure on a new slide
   * **table** - A table, implicit via passing a list or a numpy array. Table object need to be a 2D list or array. If the first line contains a string, Ite is assumed to be the table description.
+      - size - Can be an arbirary LaTeX fontsize (only relevant for LaTeX right now).
+        default='normalsize'. If set to 'auto', size is determined by table length. This assumes an empty slide ...
   * **value** - A numeric value. Must be an instance of either ```int```, ```numpy.int64```, ```float``` or ```numpy.float64```. Additional options are:
      - desc - A description of the variable. Gets printed in front of the value, followed by a colon.
      - units - The units of the variable. Gets printed behind the value.
