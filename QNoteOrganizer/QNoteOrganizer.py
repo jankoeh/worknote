@@ -4,7 +4,8 @@ Created on Sat Aug  8 12:58:34 2015
 
 @author: koehler
 """
-
+from __future__ import unicode_literals
+from .. import worknotes
 from PyQt4 import QtCore, QtGui
 from ui_QNoteOrganizer import Ui_QNoteOrganizer
 
@@ -13,12 +14,21 @@ class QNoteOrganizer(QtGui.QDialog, Ui_QNoteOrganizer):
         super(QNoteOrganizer, self).__init__(parent)
         self.setupUi(self)
         self.worknote = worknote
+        self.itemView.setHeaderLabels(["Type", "Content"])
         for slide in self.worknote.items:
-            QtGui.QListWidgetItem(slide.__class__.__name__,
-                                  self.itemView)
-            for item in slide.items:                
-                QtGui.QListWidgetItem(item.__class__.__name__,
-                                      self.itemView)               
+            parent = QtGui.QTreeWidgetItem(self.itemView, 
+                                           [slide.__class__.__name__, slide.title])
+            for item in slide.items:
+                if issubclass(type(item), worknotes.NoteContainer):
+                    child = QtGui.QTreeWidgetItem(parent, 
+                                                  [item.__class__.__name__, ""])
+                    for childitem in item.items:
+                        QtGui.QTreeWidgetItem(child, 
+                                              [childitem.__class__.__name__, 
+                                               childitem.data])
+                else:
+                    QtGui.QTreeWidgetItem(parent, 
+                                          [item.__class__.__name__, str(item.data)])
 
 def edit_note(worknote):
     """
@@ -30,7 +40,3 @@ def edit_note(worknote):
     form = QNoteOrganizer(worknote)
     form.show()
     qApp.exec_()
-
-if __name__ == "__main__":
-    edit_note()
-        
