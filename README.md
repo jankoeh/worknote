@@ -34,7 +34,7 @@ wn('... as well as units:\n')
 wn(9.81, desc = 'Earth gravity acceleration', units = 'm/s^2', precision = 2)
 wn('And we break automatically after a text line...\n')
 wn('... if the text line ends in newline as above.')
-wn.build_pdf()
+wn.build()
 wn.save()
 ```
 

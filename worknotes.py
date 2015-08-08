@@ -253,7 +253,7 @@ class Table(NoteItem):
     def __init__(self, data, size='normalsize', **kwargs):
         super(Table, self).__init__(data, **kwargs)
         if size not in ['tiny', 'scriptsize', 'footnotesize', 'small', 'normalsize',
-                        'large', 'Large', 'LARGE', 'huge',  'Huge', 'auto']:
+                        'large', 'Large', 'LARGE', 'huge', 'Huge', 'auto']:
             print "Fontsize not recognized, defaulting to autosize"
             size = 'auto'
         self.size = size
@@ -261,16 +261,16 @@ class Table(NoteItem):
         if style in ['Beamer', 'LaTeX']:
             if self.size == 'auto':
                 size = 'tiny'
-                if len(self.data)<25:
+                if len(self.data) < 25:
                     size = 'scriptsize'
-                if len(self.data)<22:
+                if len(self.data) < 22:
                     size = 'footnotesize'
-                if len(self.data)<18:
+                if len(self.data) < 18:
                     size = 'normalsize'
             data = self.data
             table = "\n\\begin{center}\n\\begin{%s}\n"%size
-            table +="\\begin{tabular}{%s}\n \\hline\n"%('c'*len(data[0]))
-            if len(data[0])>1 and type(data[0][1]) in [str, unicode]:
+            table += "\\begin{tabular}{%s}\n \\hline\n"%('c'*len(data[0]))
+            if len(data[0]) > 1 and type(data[0][1]) in [str, unicode]:
                 table += "&".join([str(i) for i in data[0]]) + "\\\\ \n \hline "
                 data = data[1:]
             for line in data:
@@ -432,7 +432,7 @@ class Worknote(NoteContainer):
         cat : str
             Category of item. If none is given, it will be determined
             through the type function
-        **kwargs : keyowrd arguments
+        **kwargs : keyword arguments
             Args like figsize etc
         """
         if cat == None:
@@ -523,6 +523,7 @@ class Worknote(NoteContainer):
             else:
                 if exists(join(self.workdir, self.workdir + '.worknote')):
                     if load_if_used or len(self.items) == 0:
+                        print "Loading xisting worknote from %s"%workdir
                         self.load(verbosity=1)
                     else:
                         print 'WARNING:', self.workdir, 'is already in use.'
