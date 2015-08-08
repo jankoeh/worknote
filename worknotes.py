@@ -540,7 +540,7 @@ class Worknote(NoteContainer):
         import cPickle
         from os.path import join
         with open(join(self.workdir,
-                       self.workdir + '.worknote'), 'wb') as outfile:
+                       'notedata.worknote'), 'wb') as outfile:
             cPickle.dump(self.head, outfile, cPickle.HIGHEST_PROTOCOL)
             cPickle.dump(self.foot, outfile, cPickle.HIGHEST_PROTOCOL)
             cPickle.dump(self.items, outfile, cPickle.HIGHEST_PROTOCOL)
@@ -559,15 +559,20 @@ class Worknote(NoteContainer):
             Select output verbosity. Defaults to 0 (= no output)
         """
         import cPickle
-        from os.path import join
+        from os.path import join, exists
         if self.workdir is None:
             if workdir is None:
                 raise OSError('No working directory given')
             self.set_workdir(workdir)
         if verbosity > 0:
             print 'Loading from', self.workdir
+        if exists(join(self.workdir, self.workdir + '.worknote')):
+            print 'WARNING: Old savefile naming in use, moving saved notes...'
+            from shutils import copyfile
+            copyfile(join(self.workdir, self.workdir + '.worknote'),
+                     join(self.workdir, 'notedata.worknote'))
         with open(join(self.workdir,
-                       self.workdir + '.worknote'), 'rb') as infile:
+                       'notedata.worknote'), 'rb') as infile:
             self.head = cPickle.load(infile)
             self.foot = cPickle.load(infile)
             self.items = cPickle.load(infile)
