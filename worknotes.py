@@ -317,7 +317,7 @@ class Slide(NoteContainer):
         else:
             self.items.append(item)
     def __str__(self):
-        text = "Slide" #+ self.title
+        text = "Slide: " + set_unicode(self.title)
         for i in xrange(len(self.items)):
             text += "\n  %d %s"%(i, self.items[i])
         return text
