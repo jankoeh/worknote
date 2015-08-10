@@ -29,7 +29,7 @@ class QNoteOrganizer(QtGui.QDialog, Ui_QNoteOrganizer):
                 else:
                     QtGui.QTreeWidgetItem(parent, 
                                           [item.__class__.__name__, str(item.data)])
-
+        self.itemView.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
 def edit_note(worknote):
     """
     Starts the QNoteOrganizer 
