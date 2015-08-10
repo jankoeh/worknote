@@ -142,11 +142,30 @@ class Equation(NoteItem):
 
 class Text(NoteItem):
     """
-    An Equation
+    Some normal text
     """
     def get_text(self, style):
         if style in ['Beamer', 'LaTeX']:
             return self.data.replace("\n", "~\\\\\n")
+        else:
+            return self.data
+
+class Code(NoteItem):
+    """
+    Some source code fragment
+    """
+    def __init__(self, data, **kwargs):
+        super(Code, self).__init__(data, **kwargs)
+        self.header = {}
+        self.header['Beamer'] = '\\texttt{'
+        self.footer = {}
+        self.footer['Beamer'] = '}'
+    def get_text(self, style):
+        if style in ['Beamer', 'LaTeX']:
+            text = self.data.replace('\n', '~\\\\\n')
+            text = text.replace(' ', '~')
+            text = text.replace('_', '\_')
+            return self.header['Beamer'] + text + self.footer['Beamer']
         else:
             return self.data
 
@@ -331,7 +350,8 @@ TYPES = {'slide' : Slide,
          'figure' : Figure,
          'figurepage': Figure,
          'table' : Table,
-         'value' : Value}
+         'value' : Value,
+         'code': Code}
 
 def find_category(item):
     """
