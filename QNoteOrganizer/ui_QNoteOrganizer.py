@@ -59,5 +59,5 @@ class Ui_QNoteOrganizer(object):
         self.tb_edit.setText(_translate("QNoteOrganizer", "...", None))
         self.tb_down.setText(_translate("QNoteOrganizer", "...", None))
         self.tb_up.setText(_translate("QNoteOrganizer", "...", None))
-        self.tb_cut.setText(_translate("QNoteOrganizer", "...", None))
+        self.tb_cut.setText(_translate("QNoteOrganizer", "X", None))
 

@@ -155,6 +155,7 @@ class Value(NoteItem):
     A numerical value with units and a description
     """
     def __init__(self, var, precision=3, desc=None, units=None, **kwargs):
+        super(Value, self).__init__(str(var), **kwargs)        
         self.var = var
         self.precision = int(precision)
         self.desc = set_unicode(desc)
@@ -520,7 +521,7 @@ class Worknote(NoteContainer):
                 except OSError:
                     print "ERROR: Unable to create working directory"
             else:
-                if exists(join(self.workdir, self.workdir + '.worknote')):
+                if exists(join(self.workdir, 'notedata.worknote')):
                     if load_if_used or len(self.items) == 0:
                         print "Loading existing worknote from %s"%workdir
                         self.load(verbosity=1)
@@ -576,11 +577,6 @@ class Worknote(NoteContainer):
             self.foot = cPickle.load(infile)
             self.items = cPickle.load(infile)
             self.metadata = cPickle.load(infile)
-        if type(self.metadata) == dict:
-            print 'WARNING: Converting metadata from old format'
-            print '\tPlease check the metadata for correctness after loading'
-            old_md = self.metadata
-            self.metadata = Metadata(**old_md)
 
     def set_metadata(self, title="", author="", date="", subtitle=""):
         """

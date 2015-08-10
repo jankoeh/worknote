@@ -60,7 +60,7 @@
      <item>
       <widget class="QToolButton" name="tb_cut">
        <property name="text">
-        <string>...</string>
+        <string>X</string>
        </property>
       </widget>
      </item>

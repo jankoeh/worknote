@@ -29,7 +29,36 @@ class QNoteOrganizer(QtGui.QDialog, Ui_QNoteOrganizer):
                 else:
                     QtGui.QTreeWidgetItem(parent, 
                                           [item.__class__.__name__, str(item.data)])
-        self.itemView.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
+        #self.itemView.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
+        self.tb_cut.clicked.connect(self.delete_item)
+    def delete_item(self):
+        tree = []
+        tree.append(self.itemView.currentItem())
+        if not tree[-1]:
+            return
+        while tree[-1].parent():
+            tree.append(tree[-1].parent())
+        tree.reverse()
+        slide_item = tree.pop(0)
+        slide_index = self.itemView.indexOfTopLevelItem(slide_item)
+        if len(tree) == 0:
+            self.worknote.items.pop(slide_index)
+            self.itemView.takeTopLevelItem(slide_index)
+            return
+        item = tree.pop(0)
+        item_index = slide_item.indexOfChild(item)
+        if len(tree) == 0:
+            self.worknote.items[slide_index].items.pop(item_index)
+            slide_item.takeChild(item_index)
+            return
+        subitem = tree.pop(0)
+        subitem_index = item.indexOfChild(subitem)
+        if len(tree)== 0:
+            self.worknote.items[slide_index].items[item_index].items.pop(subitem_index)
+            item.takeChild(subitem_index)
+        else:
+            print "Data not understood"
+        
 def edit_note(worknote):
     """
     Starts the QNoteOrganizer 
