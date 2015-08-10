@@ -4,6 +4,7 @@ Created on Fri Jul 31 13:55:18 2015
 
 @author: koehler
 """
+
 from os.path import exists
 if exists('./test'):
     print 'Cleaning up test directory...'
@@ -22,7 +23,7 @@ from pylab import *
 fig = figure(figsize=(8,6))
 plot(arange(10))
 
-from worknotes import Worknote
+from worknote import Worknote
 wn = Worknote("./test")
 wn.set_metadata(title = 'Worknotes', author = 'John Doe mit ö', 
                 date = '\\today', subtitle="The story of an awesome toolkit")
@@ -83,3 +84,5 @@ if wn1_output == wn2_output:
     print 'Saving and loading successful.'
 else:
     print 'ERROR: There were differences in the saved and loaded data'
+    
+print unicode(wn)

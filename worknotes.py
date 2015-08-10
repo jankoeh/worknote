@@ -273,7 +273,7 @@ class Table(NoteItem):
         super(Table, self).__init__(data, **kwargs)
         if size not in ['tiny', 'scriptsize', 'footnotesize', 'small', 'normalsize',
                         'large', 'Large', 'LARGE', 'huge', 'Huge', 'auto']:
-            print "Fontsize not recognized, defaulting to autosize"
+            print "Fontsize not recognized, defaulting to auto"
             size = 'auto'
         self.size = size
     def get_text(self, style, size='normalsize'):
@@ -336,7 +336,7 @@ class Slide(NoteContainer):
         else:
             self.items.append(item)
     def __str__(self):
-        text = "Slide" #+ self.title
+        text = "Slide: " + set_unicode(self.title)
         for i in xrange(len(self.items)):
             text += "\n  %d %s"%(i, self.items[i])
         return text
@@ -367,7 +367,10 @@ def find_category(item):
         The determined item category
     """
     import numpy
-    import matplotlib
+    try:
+        from matplotlib.figure import Figure as MPL_Figure
+    except ImportError:
+        MPL_Figure = None
     from os import path
     if type(item) in [str, unicode]:
         if path.splitext(item)[1] in ['.pdf', '.jpg', '.png', '.jpeg']:
@@ -384,15 +387,15 @@ def find_category(item):
             cat = 'slide'
         else:
             cat = 'text'
-    elif type(item) == matplotlib.figure.Figure:
+    elif type(item) == MPL_Figure and MPL_Figure != None:
         cat = 'figure'
     elif type(item) == list or type(item) == numpy.ndarray:
         cat = 'table'
     elif type(item) in [float, numpy.float64, int, numpy.int64]:
         cat = 'value'
     else:
-        print "Category of item not recognized: %s"%type(item)
         cat = None
+        raise TypeError("Category of item not recognized: %s"%type(item))
     return cat
 
 class Worknote(NoteContainer):
@@ -457,15 +460,11 @@ class Worknote(NoteContainer):
         """
         if cat == None:
             cat = find_category(item)
-            if cat == None:
-                print "Item not added"
-                return
         if cat in ['figure', 'figurepage'] and self.workdir is None:
             print 'Cannot add figure until working directory is set'
             return
         if not cat in TYPES:
-            print 'ERROR: Unknown category specified'
-            return
+            raise TypeError("Category not recognized: %s"%cat)
         item = TYPES[cat](item, workdir=self.workdir, **kwargs)
         if cat == 'slide':
             self.items.append(item)
@@ -543,7 +542,7 @@ class Worknote(NoteContainer):
             else:
                 if exists(join(self.workdir, self.workdir + '.worknote')):
                     if load_if_used or len(self.items) == 0:
-                        print "Loading xisting worknote from %s"%workdir
+                        print "Loading existing worknote from %s"%workdir
                         self.load(verbosity=1)
                     else:
                         print 'WARNING:', self.workdir, 'is already in use.'

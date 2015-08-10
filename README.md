@@ -7,7 +7,7 @@ Example
 -------
 
 ```python
-from worknotes import Worknote
+from worknote import Worknote
 wn = Worknote("./test", title='Test Worknotes', author='Author', date='\\today')
 wn("First slide title", cat='slide')
 wn("The Problem we want to solve:", cat='text')
@@ -37,6 +37,11 @@ wn('... if the text line ends in newline as above.')
 wn.build()
 wn.save()
 ```
+
+### Editing existing slides
+Existing slides can be edited by accessing the `wn.items` property. E.g. The last slide can be deleted by `wn.items.pop(-1)`. An item of a slide can be deleted via `wn.items.items.pop(-1)`.
+An overview over the document structure can be printed via `print wn`. If unicode is in used in the worknote, it might be necessary to cast `unicode`: `print unicode(wn)`.
+An experimental tool is available via `QNoteOrganizer.edit_note(wn)`.
 
 Item categories
 ---------------
