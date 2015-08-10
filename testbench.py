@@ -56,7 +56,23 @@ wn("# My third point")
 for i in [15, 18, 23, 34]:
     wn("Test table sizes - %d lines"%i, cat='slide')
     wn([['zahlen']+range(10)]*i, size='auto')
+wn('Source code printing demonstration', cat = 'slide')
+wn('''def set_unicode(text):
+    """
+    Return unicode string
 
+    Args:
+    -----
+    text : str, unicode
+        Text can be string or unicode
+
+    Returns
+    -------
+    text : unicode
+    """
+    if type(text) == str:
+        text = unicode(text, 'utf-8')
+    return text''', cat = 'code')
 wn.build()   #build function to be implemented , see ./test/beamer.tex
 wn1_output = wn.get_text()
 wn.save()
