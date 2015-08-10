@@ -467,11 +467,10 @@ class Worknote(NoteContainer):
         if not cat in TYPES:
             raise TypeError("Category not recognized: %s"%cat)
         item = TYPES[cat](item, workdir=self.workdir, **kwargs)
+        if cat == 'figurepage':
+            item = Slide("").add_item(item)        
         if cat == 'slide':
             self.items.append(item)
-        elif cat == 'figurepage':
-            self.items.append(Slide(""))
-            self.items[-1].add_item(item)
         else:
             self.items[-1].add_item(item)
 

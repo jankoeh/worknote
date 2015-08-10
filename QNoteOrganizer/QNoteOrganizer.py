@@ -29,9 +29,14 @@ class QNoteOrganizer(QtGui.QDialog, Ui_QNoteOrganizer):
                 else:
                     QtGui.QTreeWidgetItem(parent, 
                                           [item.__class__.__name__, str(item.data)])
-        #self.itemView.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
+        self.item_buffer= []                                         
         self.tb_cut.clicked.connect(self.delete_item)
-    def delete_item(self):
+
+    def get_tree(self):
+        """
+        Returns a list of the selected item and its parents
+        I.e. [Ancestor, Parent, selected_item]
+        """
         tree = []
         tree.append(self.itemView.currentItem())
         if not tree[-1]:
@@ -39,25 +44,39 @@ class QNoteOrganizer(QtGui.QDialog, Ui_QNoteOrganizer):
         while tree[-1].parent():
             tree.append(tree[-1].parent())
         tree.reverse()
+        return tree
+    def delete_item(self):
+        """
+        Delete selected item
+        """
+        tree = self.get_tree()
         slide_item = tree.pop(0)
         slide_index = self.itemView.indexOfTopLevelItem(slide_item)
         if len(tree) == 0:
-            self.worknote.items.pop(slide_index)
-            self.itemView.takeTopLevelItem(slide_index)
+            wn_item = self.worknote.items.pop(slide_index)
+            tv_item = self.itemView.takeTopLevelItem(slide_index)
+            self.item_buffer.append([wn_item, tv_item])
             return
         item = tree.pop(0)
         item_index = slide_item.indexOfChild(item)
         if len(tree) == 0:
-            self.worknote.items[slide_index].items.pop(item_index)
-            slide_item.takeChild(item_index)
+            wn_item = self.worknote.items[slide_index].items.pop(item_index)
+            tv_item = slide_item.takeChild(item_index)
+            self.item_buffer.append([wn_item, tv_item])            
             return
         subitem = tree.pop(0)
         subitem_index = item.indexOfChild(subitem)
         if len(tree)== 0:
-            self.worknote.items[slide_index].items[item_index].items.pop(subitem_index)
-            item.takeChild(subitem_index)
+            wn_item = self.worknote.items[slide_index].items[item_index].items.pop(subitem_index)
+            tv_item = item.takeChild(subitem_index)
+            self.item_buffer.append([wn_item, tv_item])
         else:
             print "Data not understood"
+    def insert_item(self):
+        """
+        Insert item from buffer
+        """
+        wn_item, tv_item = self.item_buffer.pop(-1)
         
 def edit_note(worknote):
     """
