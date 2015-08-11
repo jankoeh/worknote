@@ -69,7 +69,7 @@ class NoteContainer(NoteItem):
         if len(index) == 1:
             self.items.insert(index[0], item)
         else:
-            self.items[index[0]].add_item(item, index = index[1:])
+            self[index[0:1]].add_item(item, index = index[1:])
     def pop(self, index = []):
         """
         Remove an item from the items list and return it
@@ -84,7 +84,7 @@ class NoteContainer(NoteItem):
         if len(index) == 1:
             return self.items.pop(index[0])
         else:
-            self.items[index[0]].pop(index[1:])
+            return self[index[0:1]].pop(index[1:])
     def __str__(self):
         text = self.__class__.__name__
         for item in self.items:
@@ -464,7 +464,7 @@ def find_category(item):
         cat = None
         raise TypeError("Category of item not recognized: %s"%type(item))
     return cat
-
+    
 class Worknote(NoteContainer):
     """
     Class That allows to drop comments in figures into a presentation while
@@ -535,24 +535,15 @@ class Worknote(NoteContainer):
         if cat in ['figure', 'figurepage'] and self.workdir is None:
             print 'Cannot add figure until working directory is set'
             return
-        if not cat in TYPES:
-            raise TypeError("Category not recognized: %s"%cat)
         item = TYPES[cat](item, workdir=self.workdir, **kwargs)
-        index = self._NoteContainer__parse_index(index)        
+        index = self._NoteContainer__parse_index(index)
         if cat == 'figurepage':
             item = Slide("").add_item(item)
             index = index[0:1]
-            super(Worknote, self).add_item(item, index = index)
         elif cat == 'slide':
             index = index[0:1]
-            super(Worknote, self).add_item(item, index = index)
-        else:
-            if issubclass(type(self[index[0:1]]), NoteContainer):
-                self[index[0:1]].add_item(item, index = index[1:])
-            else:
-                msg = 'Cannot add {%s} to {%s}'.format(item.__class__.__name__,
-                                                       self[index[0:1]].__class__.__name__)
-                raise TypeError(msg)
+        self.insert(index, item)
+
     def __call__(self, item, cat = None, index = [], **kwargs):
         self.add_item(item, cat, index, **kwargs)
 
@@ -662,7 +653,7 @@ class Worknote(NoteContainer):
                 raise OSError('No working directory given')
             self.set_workdir(workdir)
         if verbosity > 0:
-            print 'Loading existing worknote from %s...'%self.workdir
+            print 'Loading existing worknote from "%s"...'%self.workdir
         if exists(join(self.workdir, self.workdir + '.worknote')):
             print 'WARNING: Old savefile naming in use, moving saved notes...'
             from shutils import copyfile
@@ -728,7 +719,51 @@ class Worknote(NoteContainer):
         self.pop(index)
         
     def insert(self, index, item):
-        self.add_item(item, cat = None, index = index)
+        """
+        Insert the item at the given index.
+        
+        Args
+        ----
+        index : list
+            A valid index assignment
+        item : NoteItem
+            A valid NoteItem (or subclass) object
+        """
+        if type(item) == Slide:
+            super(Worknote, self).add_item(item, index = index)
+        else:
+            if issubclass(type(self[index[0:1]]), NoteContainer):
+                self[index[0:1]].add_item(item, index = index[1:])
+            else:
+                msg = 'Cannot add {%s} to {%s}'.format(item.__class__.__name__,
+                                                       self[index[0:1]].__class__.__name__)
+                raise TypeError(msg)
+
+    def move(self, src_index, dest_index):
+        """
+        Move the object at src_index to the dest_index
+        
+        Args
+        ----
+        src_index : int or str or iterable
+            The source index. Index must be either an integer index, an 
+            iterable list of integer indices or an index notation of the 
+            style 'i:j:k' where indices are separated by colons
+        dest_index : int or str or iterable
+            The destination index
+        """
+        src_index = self._NoteContainer__parse_index(src_index)
+        dest_index = self._NoteContainer__parse_index(dest_index)
+        if not self._NoteContainer__exists_item(src_index):
+            raise IndexError('Invalid source index: ', + str(src_index))
+        if type(self[src_index]) == Slide:
+            dest_index = dest_index[0:1]
+        elif type(self[src_index]) in [ListItem, EnumItem]:
+            dest_index = dest_index[0:3]
+        else:
+            dest_index = dest_index[0:2]
+        item = self.pop(src_index)
+        self.insert(dest_index, item)
         
 class Metadata(object):
     """
