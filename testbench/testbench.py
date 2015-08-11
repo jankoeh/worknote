@@ -23,7 +23,7 @@ from pylab import *
 fig = figure(figsize=(8,6))
 plot(arange(10))
 
-from worknote import Worknote
+from Worknote import Worknote
 wn = Worknote("./test")
 wn.set_metadata(title = 'Worknotes', author = 'John Doe mit ö', 
                 date = '\\today', subtitle="The story of an awesome toolkit")
@@ -75,6 +75,7 @@ wn('''def set_unicode(text):
         text = unicode(text, 'utf-8')
     return text''', cat = 'code')
 wn.build()   #build function to be implemented , see ./test/beamer.tex
+wn.build(style = 'Report')
 wn1_output = wn.get_text()
 wn.save()
 wn2 = Worknote()

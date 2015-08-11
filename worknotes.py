@@ -85,6 +85,10 @@ class List(NoteContainer):
         for i in xrange(len(self.items)):
             text += "\n    %d %s"%(i, self.items[i])
         return text
+    def get_text(self, style = 'Beamer'):
+        if style == 'Report':
+            style = 'Beamer'
+        return super(List, self).get_text(style = style)
 class Enumerate(List):
     """
     Enumerated list environment
@@ -103,7 +107,7 @@ class EnumItem(NoteItem):
             data = data.strip()[2:]
         return set_unicode(data)
     def get_text(self, style="Beamer"):
-        if style in ['Beamer', 'LaTeX']:
+        if style in ['Beamer', 'Report']:
             return "\\item {} \n".format(self.data)
         else: #Other styles need ne be handled by enumerate as well
             return "  - {} \n".format(self.data)
@@ -117,14 +121,13 @@ class ListItem(NoteItem):
             data = data.strip()[2:]
         return set_unicode(data)
     def get_text(self, style):
-        if style in ['Beamer', 'LaTeX']:
+        if style in ['Beamer', 'Report']:
             return "\\item {} \n".format(self.data)
         elif style in ["Markdown"]:
             return "  * {} \n".format(self.data)
         else:
             print "Defaulting to Markdown"
             return "  * {} \n".format(self.data)
-
 
 class Equation(NoteItem):
     """
@@ -135,7 +138,7 @@ class Equation(NoteItem):
         data = data.strip().strip("$$")
         return data
     def get_text(self, style):
-        if style in ['Beamer', 'LaTeX']:
+        if style in ['Beamer', 'Report']:
             return "$$ {} $$".format(self.data)
         else:
             return "$$ {} $$".format(self.data)
@@ -145,7 +148,7 @@ class Text(NoteItem):
     Some normal text
     """
     def get_text(self, style):
-        if style in ['Beamer', 'LaTeX']:
+        if style in ['Beamer', 'Report']:
             return self.data.replace("\n", "~\\\\\n")
         else:
             return self.data
@@ -161,7 +164,7 @@ class Code(NoteItem):
         self.footer = {}
         self.footer['Beamer'] = '}'
     def get_text(self, style):
-        if style in ['Beamer', 'LaTeX']:
+        if style in ['Beamer', 'Report']:
             text = self.data.replace('\n', '~\\\\\n')
             text = text.replace(' ', '~')
             text = text.replace('_', '\_')
@@ -187,6 +190,8 @@ class Value(NoteItem):
         self.value_formatter['Beamer'] = '\\texttt{%s}'
     def get_text(self, style):
         import numpy
+        if style == 'Report':
+            style = 'Beamer'
         if type(self.var) in [int, numpy.int64]:
             res = u'{var:d}'.format(var=self.var)
         elif type(self.var) in [float, numpy.float64]:
@@ -247,7 +252,7 @@ class Figure(NoteItem):
             data.savefig(path.join(self.workdir, fn_figure))
         return fn_figure
     def get_text(self, style):
-        if style in ['Beamer', 'LaTeX']:
+        if style in ['Beamer', 'Report']:
             text = "\\includegraphics[width=%g\\textwidth]{%s}\n"%(self.size, self.data)
             if self.align:
                 text = "\\begin{%s}\n %s \\end{%s}"%(self.align, text, self.align)
@@ -278,7 +283,7 @@ class Table(NoteItem):
             size = 'auto'
         self.size = size
     def get_text(self, style, size='normalsize'):
-        if style in ['Beamer', 'LaTeX']:
+        if style in ['Beamer', 'Report']:
             if self.size == 'auto':
                 size = 'tiny'
                 if len(self.data) < 25:
@@ -312,6 +317,8 @@ class Slide(NoteContainer):
         self.title = title
         self.head['Beamer'] = "\\frame{\\frametitle{%s}\n"%title
         self.foot['Beamer'] = '}\n'
+        self.head['Report'] = "\\section{%s}\n"%title
+        self.foot['Report'] = '\n\n'
         self.head['Markdown'] = "{}\n".format(title) + "-"*len(title)+"\n"
         self.foot['Markdown'] = "\n"
     def clean_data(self, title):
@@ -437,6 +444,17 @@ class Worknote(NoteContainer):
 %%%TITLEPAGE%%%
         """
         self.foot['Beamer'] = "\\end{document}"
+        self.head['Report'] = """
+\\documentclass{report}
+\\usepackage[english]{babel}
+\\usepackage[utf8]{inputenc}
+\\usepackage{graphicx}
+\\usepackage{color}
+%%%METADATA%%%
+\\begin{document}
+%%%TITLEPAGE%%%
+        """
+        self.foot['Report'] = "\\end{document}"
         self.metadata = Metadata()
         self.set_metadata(title, author, date, subtitle)
         if 'load_if_used' in kwargs:
@@ -620,6 +638,7 @@ class Worknote(NoteContainer):
             style = 'default'
         text = ""
         text += self.head[style]
+        print style
         text = text.replace('%%%METADATA%%%', self.metadata.get_metadata(style))
         if not len(self.metadata) == 0:
             text = text.replace('%%%TITLEPAGE%%%', self.metadata.get_titlepage(style))
@@ -649,16 +668,25 @@ class Metadata(object):
     """
     def __init__(self, title='', author='', date='', subtitle=''):
         self.metadata = {}
-        self.title_formatter = {}
-        self.title_formatter['Beamer'] = '\\title{%s}\n'
-        self.subtitle_formatter = {}
-        self.subtitle_formatter['Beamer'] = '\\subtitle{%s}\n'
-        self.date_formatter = {}
-        self.date_formatter['Beamer'] = '\\date{%s}\n'
-        self.author_formatter = {}
-        self.author_formatter['Beamer'] = '\\author{%s}\n'
+        self.formatter = {}
+        self.formatter['title'] = {}
+        self.formatter['title']['Beamer'] = '\\title{%s}\n'
+        self.formatter['title']['Report'] = '\\title{%s}\n'
+        self.formatter['subtitle'] = {}
+        self.formatter['subtitle']['Beamer'] = '\\subtitle{%s}\n'
+        self.formatter['subtitle']['Report'] = '\\subtitle{%s}\n'
+        self.formatter['date'] = {}
+        self.formatter['date']['Beamer'] = '\\date{%s}\n'
+        self.formatter['date']['Report'] = '\\date{%s}\n'
+        self.formatter['author'] = {}
+        self.formatter['author']['Beamer'] = '\\author{%s}\n'
+        self.formatter['author']['Report'] = '\\author{%s}\n'
         self.titlepage_generator = {}
         self.titlepage_generator['Beamer'] = "\\frame[plain]{\\titlepage}\n"
+        self.titlepage_generator['Report'] = "\\maketitle\n"
+        self.supported_metadata = {}
+        self.supported_metadata['Beamer'] = ['title', 'author', 'date', 'subtitle']
+        self.supported_metadata['Report'] = ['title', 'author', 'date']
         self.set_metadata(title=title, author=author, date=date,
                           subtitle=subtitle)
     def get_metadata(self, style):
@@ -666,14 +694,9 @@ class Metadata(object):
         Returns a proper formated metadata string
         """
         metadata_str = ""
-        if self.metadata['title']:
-            metadata_str += self.title_formatter[style]%self.metadata['title']
-        if self.metadata['subtitle']:
-            metadata_str += self.subtitle_formatter[style]%self.metadata['subtitle']
-        if self.metadata['date']:
-            metadata_str += self.date_formatter[style]%self.metadata['date']
-        if self.metadata['author']:
-            metadata_str += self.author_formatter[style]%self.metadata['author']
+        for metadata in self.supported_metadata[style]:
+            if self.metadata[metadata]:
+                metadata_str += self.formatter[metadata][style]%self.metadata[metadata]
         return metadata_str
     def get_titlepage(self, style):
         """
