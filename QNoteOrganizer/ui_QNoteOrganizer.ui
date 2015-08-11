@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>435</width>
-    <height>300</height>
+    <width>628</width>
+    <height>510</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,34 +15,68 @@
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <item>
-    <widget class="QTreeWidget" name="itemView">
-     <property name="dragDropMode">
-      <enum>QAbstractItemView::NoDragDrop</enum>
-     </property>
-     <property name="headerHidden">
-      <bool>false</bool>
-     </property>
-     <property name="columnCount">
-      <number>2</number>
-     </property>
-     <column>
-      <property name="text">
-       <string notr="true">1</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string notr="true">2</string>
-      </property>
-     </column>
-    </widget>
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <widget class="QTreeWidget" name="itemView">
+       <property name="dragDropMode">
+        <enum>QAbstractItemView::NoDragDrop</enum>
+       </property>
+       <property name="headerHidden">
+        <bool>false</bool>
+       </property>
+       <property name="columnCount">
+        <number>2</number>
+       </property>
+       <column>
+        <property name="text">
+         <string notr="true">1</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string notr="true">2</string>
+        </property>
+       </column>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Removed item buffer:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QListWidget" name="bufferView">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>100</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <widget class="QToolButton" name="tb_edit">
+      <widget class="QToolButton" name="tb_insert">
+       <property name="toolTip">
+        <string>Insert item from buffer into Worknote</string>
+       </property>
        <property name="text">
-        <string>...</string>
+        <string>-&gt;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="tb_cut">
+       <property name="toolTip">
+        <string>Delete item from Worknote</string>
+       </property>
+       <property name="text">
+        <string>X</string>
        </property>
       </widget>
      </item>
@@ -54,16 +88,9 @@
       </widget>
      </item>
      <item>
-      <widget class="QToolButton" name="tb_insert">
+      <widget class="QToolButton" name="tb_edit">
        <property name="text">
-        <string>-&gt;</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QToolButton" name="tb_cut">
-       <property name="text">
-        <string>X</string>
+        <string>...</string>
        </property>
       </widget>
      </item>

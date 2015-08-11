@@ -314,7 +314,7 @@ class Slide(NoteContainer):
     def __init__(self, title, **kwargs):
         super(Slide, self).__init__(**kwargs)
         title = self.clean_data(title)
-        self.title = title
+        self.data = title
         self.head['Beamer'] = "\\frame{\\frametitle{%s}\n"%title
         self.foot['Beamer'] = '}\n'
         self.head['Report'] = "\\section{%s}\n"%title
@@ -344,7 +344,7 @@ class Slide(NoteContainer):
         else:
             self.items.append(item)
     def __str__(self):
-        text = "Slide: " + set_unicode(self.title)
+        text = "Slide: " + set_unicode(self.data)
         for i in xrange(len(self.items)):
             text += "\n  %d %s"%(i, self.items[i])
         return text
@@ -524,7 +524,11 @@ class Worknote(NoteContainer):
         if build_pdf:
             print "Building pdf"
             from subprocess import call
-            build = call(["pdflatex", style+".tex"], cwd=self.workdir)
+            import os
+            FNULL = open(os.devnull, 'w')
+            build = call(["pdflatex", style+".tex"], 
+                         cwd=self.workdir, 
+                         stdout=FNULL)
             if build == 0:
                 print "Building sucessful: %s"%path.join(self.workdir, style+".pdf")
             else:
@@ -641,7 +645,6 @@ class Worknote(NoteContainer):
             style = 'default'
         text = ""
         text += self.head[style]
-        print style
         text = text.replace('%%%METADATA%%%', self.metadata.get_metadata(style))
         if not len(self.metadata) == 0:
             text = text.replace('%%%TITLEPAGE%%%', self.metadata.get_titlepage(style))

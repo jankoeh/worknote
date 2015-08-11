@@ -15,22 +15,22 @@ class QNoteOrganizer(QtGui.QDialog, Ui_QNoteOrganizer):
         self.setupUi(self)
         self.worknote = worknote
         self.itemView.setHeaderLabels(["Type", "Content"])
-        self.update_itemView()
-        self.item_buffer= []                                         
+        self.item_buffer = []                                         
+        self.update_itemViews()
         self.tb_cut.clicked.connect(self.delete_item)
         self.tb_insert.clicked.connect(self.insert_item)
 
-    def update_itemView(self):
+    def update_itemViews(self):
         """
         update the itemView widget
         """
         #empty view
-        while self.itemView.topLevelItemCount() > 0:
+        while self.itemView.topLevelItemCount():
             self.itemView.takeTopLevelItem(0)
         #populate view
         for slide in self.worknote.items:
             parent = QtGui.QTreeWidgetItem(self.itemView, 
-                                           [slide.__class__.__name__, slide.title])
+                                           [slide.__class__.__name__, slide.data])
             for item in slide.items:
                 if issubclass(type(item), worknotes.NoteContainer):
                     child = QtGui.QTreeWidgetItem(parent, 
@@ -42,7 +42,19 @@ class QNoteOrganizer(QtGui.QDialog, Ui_QNoteOrganizer):
                 else:
                     QtGui.QTreeWidgetItem(parent, 
                                           [item.__class__.__name__, str(item.data)])        
-
+        QtGui.QTreeWidgetItem(self.itemView, ["", ""]) #add empty element
+        #empty buffy
+        while self.bufferView.count():
+            self.bufferView.takeItem(0)
+        #fill buffer        
+        for item in self.item_buffer:
+             QtGui.QListWidgetItem(item.__class__.__name__+" : "+item.data, 
+                                   self.bufferView)
+        if len(self.item_buffer):
+            self.tb_insert.setEnabled(True)
+        else:
+            self.tb_insert.setDisabled(True) 
+        
     def get_item_tree(self):
         """
         Returns a list of the selected item and its parents
@@ -72,19 +84,21 @@ class QNoteOrganizer(QtGui.QDialog, Ui_QNoteOrganizer):
         """
         tree = self.get_item_tree()
         indices = self.get_indices(tree)
-        wn_item = self.worknote.cut(indices)
-        self.update_itemView()
+        if indices[0] >= len(self.worknote.items):
+            return #empty last element
+        wn_item = self.worknote.pop(indices)
+        self.update_itemViews()
         self.item_buffer.insert(0, wn_item)            
 
     def insert_item(self):
         """
         Insert item from buffer
         """
-        wn_item = self.item_buffer.pop(0)
+        wn_item = self.item_buffer.pop(self.bufferView.currentIndex())
         tree = self.get_item_tree()
         indices = self.get_indices(tree)
         self.worknote.insert(indices, wn_item)
-        self.update_itemView()
+        self.update_itemViews()
         
 def edit_note(worknote):
     """
