@@ -299,7 +299,7 @@ class Table(NoteItem):
         self.size = size
     def get_text(self, style, size='normalsize'):
         if style in ['Beamer', 'Report']:
-            if self.size == 'auto':
+            if self.size == 'auto' and style == 'Beamer':
                 size = 'tiny'
                 if len(self.data) < 25:
                     size = 'scriptsize'
@@ -307,6 +307,8 @@ class Table(NoteItem):
                     size = 'footnotesize'
                 if len(self.data) < 18:
                     size = 'normalsize'
+            elif self.size == 'auto':
+                size = 'normalsize'
             data = self.data
             table = "\n\\begin{center}\n\\begin{%s}\n"%size
             table += "\\begin{tabular}{%s}\n \\hline\n"%('c'*len(data[0]))
@@ -320,9 +322,23 @@ class Table(NoteItem):
             return table
         elif style in ['Markdown']:
             table = ""
-            for line in self.data:
-                line = [str(i) for i in line]
-                table += "| "+ "\t|".join(line) + "\t|\n"
+            table_items = [[str(i) for i in line] for line in self.data]
+            maxlen = []
+            for i in xrange(len(table_items[0]))    :
+                maxlen.append(max([len(line[i]) for line in table_items]))
+            line  = table_items[0]
+            table += "| "
+            for i in xrange(len(line)):
+                table += line[i] + " "*(maxlen[i]-len(line[i])) + " | "
+            table += "\n|"
+            for i in xrange(len(line)):
+                table += "-"*(maxlen[i]+2) + "|"
+            table += "\n"
+            for line in table_items[1:]:
+                table += "| "
+                for i in xrange(len(line)):
+                    table += line[i] + " "*(maxlen[i]-len(line[i])) + " | "
+                table += "\n"
             return table
         else:
             return str(self.data)
