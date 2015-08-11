@@ -320,9 +320,23 @@ class Table(NoteItem):
             return table
         elif style in ['Markdown']:
             table = ""
-            for line in self.data:
-                line = [str(i) for i in line]
-                table += "| "+ "\t|".join(line) + "\t|\n"
+            table_items = [[str(i) for i in line] for line in self.data]
+            maxlen = []
+            for i in xrange(len(table_items[0]))    :
+                maxlen.append(max([len(line[i]) for line in table_items]))
+            line  = table_items[0]
+            table += "| "
+            for i in xrange(len(line)):
+                table += line[i] + " "*(maxlen[i]-len(line[i])) + " | "
+            table += "\n|"
+            for i in xrange(len(line)):
+                table += "-"*(maxlen[i]+2) + "|"
+            table += "\n"
+            for line in table_items[1:]:
+                table += "| "
+                for i in xrange(len(line)):
+                    table += line[i] + " "*(maxlen[i]-len(line[i])) + " | "
+                table += "\n"
             return table
         else:
             return str(self.data)

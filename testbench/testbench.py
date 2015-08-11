@@ -13,7 +13,6 @@ if exists('./test'):
     files = listdir('./test')
     for fn in files:
         fnpath = join('./test', fn)
-        print fnpath
         remove(fnpath)
     rmdir('./test')
     print 'Done.'
