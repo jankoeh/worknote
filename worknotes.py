@@ -53,7 +53,7 @@ class NoteContainer(NoteItem):
             text += item.get_text(style)
         text += self.foot[style]
         return text
-    def add_item(self, item):
+    def add_item(self, item, index = []):
         """
         Adds an item to the items list
 
@@ -61,16 +61,80 @@ class NoteContainer(NoteItem):
         ----
         item : NoteItem
             subitem to add to
-        **kwargs : keyowrd arguments
-            Args like figsize etc
+        index : list or None
         """
-        self.items.append(item)
+        if index == []:
+            index = [len(self.items),]
+        index = self.__parse_index(index)
+        if len(index) == 1:
+            self.items.insert(index[0], item)
+        else:
+            self.items[index[0]].add_item(item, index = index[1:])
+    def pop(self, index = []):
+        """
+        Remove an item from the items list and return it
+
+        Args
+        ----
+        index : list or None
+        """
+        if index == []:
+            index = [-1,]
+        index = self.__parse_index(index)
+        if len(index) == 1:
+            return self.items.pop(index[0])
+        else:
+            self.items[index[0]].pop(index[1:])
     def __str__(self):
         text = self.__class__.__name__
         for item in self.items:
             text += "\n"+str(item)
         return text
-
+    def __parse_index(self, index):
+        from numpy import int64, array
+        if type(index) == str:
+            try:
+                index = [int(x) for x in index.split(':')]
+            except ValueError:
+                raise ValueError('Invalid index notation: %s'%index)
+            return index
+        elif type(index) in [int, int64]:
+            return [index,]
+        elif type(index) in [list, tuple, array]:
+            return [int(x) for x in index]
+        else:
+            raise ValueError('Invalid value for index: ' + str(index))
+    def __getitem__(self, index):
+        if index == []:
+            index = [-1,]
+        index = self.__parse_index(index)
+        if len(index) == 1:
+            try:
+                res = self.items[index[0]]
+            except IndexError:
+                return None
+            return res
+        else:
+            try:
+                res = self.items[index[0]][index[1:]]
+            except IndexError:
+                return None
+            return res
+    def __exists_item(self, index):
+        if index == []:
+            index = [-1,]
+        index = self.__parse_index(index)
+        item = self.items
+        for i in index[:-1]:
+            try:
+                item = item[i].items
+            except IndexError:
+                return False
+        try:
+            item = item[index[-1]]
+        except IndexError:
+            return False
+        return True
 
 class List(NoteContainer):
     """
@@ -322,20 +386,22 @@ class Slide(NoteContainer):
             title = title.split("\n")[0]
         return title
 
-    def add_item(self, item, **kwargs):
+    def add_item(self, item, index = [], **kwargs):
         """
-        Adds an item to slide
+        Adds an item to a slide
         """
-        if type(item) == ListItem: # Handle Lists
-            if len(self.items) == 0 or type(self.items[-1]) != List:
-                self.items.append(List(**kwargs))
-            self.items[-1].add_item(item)
-        elif type(item) == EnumItem: # Handle enumerated Lists
-            if len(self.items) == 0 or type(self.items[-1]) != Enumerate:
-                self.items.append(Enumerate(**kwargs))
-            self.items[-1].add_item(item)
+        listitem_handlers = {ListItem: List, EnumItem: Enumerate}
+        if type(item) in listitem_handlers:
+            if (type(self[index[0:1]]) == List and type(item) == ListItem) or \
+                (type(self[index[0:1]]) == Enumerate and type(item) == EnumItem):
+                self[index[0:1]].add_item(item, index = index[1:2])
+            else:
+                listitem = item
+                item = listitem_handlers[type(listitem)](**kwargs)
+                item.add_item(listitem)
+                super(Slide, self).add_item(item, index = index[0:1])
         else:
-            self.items.append(item)
+            super(Slide, self).add_item(item, index = index[0:1])
     def __str__(self):
         text = "Slide: " + set_unicode(self.title)
         for i in xrange(len(self.items)):
@@ -445,7 +511,7 @@ class Worknote(NoteContainer):
             load_if_used = True
         self.set_workdir(workdir, load_if_used=load_if_used)
 
-    def add_item(self, item, cat=None, **kwargs):
+    def add_item(self, item, cat = None, index = [], **kwargs):
         """
         Adds an item to the last slide
 
@@ -456,6 +522,11 @@ class Worknote(NoteContainer):
         cat : str
             Category of item. If none is given, it will be determined
             through the type function
+        index : int or str or iterable or []
+            Index must be either an integer index, an iterable list of integer
+            indices or an index notation of the style 'i:j:k' where indices are
+            separated by colons. If index an empty list, the item will be 
+            appended to the last element.
         **kwargs : keyword arguments
             Args like figsize etc
         """
@@ -467,15 +538,23 @@ class Worknote(NoteContainer):
         if not cat in TYPES:
             raise TypeError("Category not recognized: %s"%cat)
         item = TYPES[cat](item, workdir=self.workdir, **kwargs)
+        index = self._NoteContainer__parse_index(index)        
         if cat == 'figurepage':
-            item = Slide("").add_item(item)        
-        if cat == 'slide':
-            self.items.append(item)
+            item = Slide("").add_item(item)
+            index = index[0:1]
+            super(Worknote, self).add_item(item, index = index)
+        elif cat == 'slide':
+            index = index[0:1]
+            super(Worknote, self).add_item(item, index = index)
         else:
-            self.items[-1].add_item(item)
-
-    def __call__(self, item, cat=None, **kwargs):
-        self.add_item(item, cat, **kwargs)
+            if issubclass(type(self[index[0:1]]), NoteContainer):
+                self[index[0:1]].add_item(item, index = index[1:])
+            else:
+                msg = 'Cannot add {%s} to {%s}'.format(item.__class__.__name__,
+                                                       self[index[0:1]].__class__.__name__)
+                raise TypeError(msg)
+    def __call__(self, item, cat = None, index = [], **kwargs):
+        self.add_item(item, cat, index, **kwargs)
 
     def build(self, style='Beamer'):
         """
@@ -635,40 +714,9 @@ class Worknote(NoteContainer):
             text += "\n%d %s"%(i, self.items[i].__str__())
         return text
 
-    def __parse_index(self, index):
-        from numpy import int64, array
-        if type(index) == str:
-            try:
-                index = [int(x) for x in index.split(':')]
-            except ValueError:
-                raise ValueError('Invalid index notation: %s'%index)
-            return index
-        elif type(index) in [int, int64]:
-            return [index,]
-        elif type(index) in [list, tuple, array]:
-            return [int(x) for x in index]
-        else:
-            raise ValueError('Invalid value for index: ' + str(index))
-
-    def __exists_item(self, index):
-        item = self.items
-        print index
-        for i in index[:-1]:
-            print i
-            print type(item)
-            try:
-                item = item[i].items
-            except IndexError:
-                return False
-        try:
-            item = item[index[-1]]
-        except IndexError:
-            return False
-        return True
-
-    def pop(self, index):
+    def remove(self, index = []):
         """
-        Remove the item at the given index and return it.
+        Remove the item at the given index.
         
         Args
         ----
@@ -677,15 +725,11 @@ class Worknote(NoteContainer):
             indices or an index notation of the style 'i:j:k' where indices are
             separated by colons
         """
-        index = self.__parse_index(index)
-        if self.__exists_item(index):
-            item = self.items
-            for i in index[:-1]:
-                item = item[i].items
-            return item.pop(index[-1])
-        else:
-            raise IndexError('No element at given index: ' + str(index))
- 
+        self.pop(index)
+        
+    def insert(self, index, item):
+        self.add_item(item, cat = None, index = index)
+        
 class Metadata(object):
     """
     Class to handle metadata
