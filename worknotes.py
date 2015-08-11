@@ -80,6 +80,8 @@ class List(NoteContainer):
         super(List, self).__init__(**kwargs)
         self.head['Beamer'] = '\\begin{itemize}\n'
         self.foot['Beamer'] = '\\end{itemize}\n'
+        self.head['Markdown'] = "\n"
+        self.foot['Markdown'] = "\n"        
     def __str__(self):
         text = self.__class__.__name__
         for i in xrange(len(self.items)):
@@ -89,6 +91,7 @@ class List(NoteContainer):
         if style == 'Report':
             style = 'Beamer'
         return super(List, self).get_text(style = style)
+        
 class Enumerate(List):
     """
     Enumerated list environment
@@ -97,6 +100,7 @@ class Enumerate(List):
         super(Enumerate, self).__init__(**kwargs)
         self.head['Beamer'] = '\\begin{enumerate}\n'
         self.foot['Beamer'] = '\\end{enumerate}\n'
+
 
 class EnumItem(NoteItem):
     """
@@ -138,7 +142,7 @@ class Equation(NoteItem):
         data = data.strip().strip("$$")
         return data
     def get_text(self, style):
-        if style in ['Beamer', 'Report']:
+        if style in ['Beamer', 'Report', 'Markdown']:
             return "$$ {} $$".format(self.data)
         else:
             return "$$ {} $$".format(self.data)
@@ -150,6 +154,11 @@ class Text(NoteItem):
     def get_text(self, style):
         if style in ['Beamer', 'Report']:
             return self.data.replace("\n", "~\\\\\n")
+        elif style in ['Markdown']:
+            text = self.data
+            if self.data.strip()[-2:] != "\n":
+                text = text+"\n"
+            return text.replace("\n", "\n\n")
         else:
             return self.data
 
@@ -157,20 +166,16 @@ class Code(NoteItem):
     """
     Some source code fragment
     """
-    def __init__(self, data, **kwargs):
-        super(Code, self).__init__(data, **kwargs)
-        self.header = {}
-        self.header['Beamer'] = '\\texttt{'
-        self.footer = {}
-        self.footer['Beamer'] = '}'
     def get_text(self, style):
         if style in ['Beamer', 'Report']:
             text = self.data.replace('\n', '~\\\\\n')
             text = text.replace(' ', '~')
             text = text.replace('_', '\_')
-            return self.header['Beamer'] + text + self.footer['Beamer']
+            text = '\\texttt{' + text + '}'
         else:
-            return self.data
+            text = '```\n' + self.data + '\n```\n'
+        return text
+
 
 class Value(NoteItem):
     """
@@ -184,10 +189,17 @@ class Value(NoteItem):
         self.units = set_unicode(units)
         self.units_wrapper = {}
         self.units_wrapper['Beamer'] = '$%s$'
+        self.units_wrapper['Markdown'] = '%s'
         self.unit_formatter = {}
         self.unit_formatter['Beamer'] = '\\mathsf{%s}'
+        self.unit_formatter['Markdown'] = '%s'
         self.value_formatter = {}
         self.value_formatter['Beamer'] = '\\texttt{%s}'
+        self.value_formatter['Markdown'] = '%s'
+        self.cr_formater = {}
+        self.cr_formater['Beamer'] = '\\\\\n'
+        self.cr_formater['Markdown'] = '\n\n'
+
     def get_text(self, style):
         import numpy
         if style == 'Report':
@@ -207,7 +219,7 @@ class Value(NoteItem):
             res = self.desc + ': ' + res
         if not self.units is None:
             res += ' ' + self.units_wrapper[style]%self.format_units(style)
-        return res + '\\\\\n'
+        return res + self.cr_formater[style]
     def format_units(self, style):
         """
         Formats units into proper style. E.g. m^2 -> \mathsf{m}^2
@@ -257,8 +269,11 @@ class Figure(NoteItem):
             if self.align:
                 text = "\\begin{%s}\n %s \\end{%s}"%(self.align, text, self.align)
             return text
+        elif style in ['Markdown']:
+            text = '![Image](%s)'%(self.data)
+            return text
         else:
-            self.data
+            return self.data
 
 class Table(NoteItem):
     """
@@ -303,6 +318,12 @@ class Table(NoteItem):
             table += "\\hline \\hline\n \\end{tabular}\n"
             table += "\\end{%s}\n\\end{center}\n"%size
             return table
+        elif style in ['Markdown']:
+            table = ""
+            for line in self.data:
+                line = [str(i) for i in line]
+                table += "| "+ "\t|".join(line) + "\t|\n"
+            return table
         else:
             return str(self.data)
 
@@ -319,8 +340,9 @@ class Slide(NoteContainer):
         self.foot['Beamer'] = '}\n'
         self.head['Report'] = "\\section{%s}\n"%title
         self.foot['Report'] = '\n\n'
-        self.head['Markdown'] = "{}\n".format(title) + "-"*len(title)+"\n"
-        self.foot['Markdown'] = "\n"
+        self.head['Markdown'] = "## {}\n".format(title)
+        self.foot['Markdown'] = "\n\n"
+        
     def clean_data(self, title):
         title = set_unicode(title)
         if len(title.split("\n")) == 2 and \
@@ -456,6 +478,8 @@ class Worknote(NoteContainer):
 %%%TITLEPAGE%%%
         """
         self.foot['Report'] = "\\end{document}"
+        self.head['Markdown'] = '%%%METADATA%%%'
+        self.foot['Markdown'] = ''
         self.metadata = Metadata()
         self.set_metadata(title, author, date, subtitle)
         if 'load_if_used' in kwargs:
@@ -509,6 +533,7 @@ class Worknote(NoteContainer):
               * 'Beamer.tex' - Build Beamer.tex
               * 'Report' - Build Report.pdf
               * 'Report.tex' - Build Report.tex
+              * 'Markdown' - Build Report.md
               * More to come!
         """
         from os import path
@@ -517,8 +542,13 @@ class Worknote(NoteContainer):
         if style[-4:] == '.tex':
             build_pdf = False
             style = style[:-4]
-        f_out = codecs.open(path.join(self.workdir, style+".tex"), 'w',
-                            encoding='utf-8')
+        if style in ['Beamer', 'Report']:
+            f_out = codecs.open(path.join(self.workdir, style+".tex"), 'w',
+                                encoding='utf-8')
+        elif style in ['Markdown']:
+            f_out = codecs.open(path.join(self.workdir, "Report.md"), 'w',
+                                encoding='utf-8')
+            build_pdf = False
         f_out.write(self.get_text(style=style))
         f_out.close()
         if build_pdf:
@@ -678,21 +708,28 @@ class Metadata(object):
         self.formatter['title'] = {}
         self.formatter['title']['Beamer'] = '\\title{%s}\n'
         self.formatter['title']['Report'] = '\\title{%s}\n'
+        self.formatter['title']['Markdown'] = '# %s\n'
         self.formatter['subtitle'] = {}
         self.formatter['subtitle']['Beamer'] = '\\subtitle{%s}\n'
         self.formatter['subtitle']['Report'] = '\\subtitle{%s}\n'
+        self.formatter['subtitle']['Markdown'] = '    %s\n'
         self.formatter['date'] = {}
         self.formatter['date']['Beamer'] = '\\date{%s}\n'
         self.formatter['date']['Report'] = '\\date{%s}\n'
+        self.formatter['date']['Markdown'] = '    %s\n\n'
         self.formatter['author'] = {}
         self.formatter['author']['Beamer'] = '\\author{%s}\n'
         self.formatter['author']['Report'] = '\\author{%s}\n'
+        self.formatter['author']['Markdown'] = '    %s\n'
+        
         self.titlepage_generator = {}
         self.titlepage_generator['Beamer'] = "\\frame[plain]{\\titlepage}\n"
         self.titlepage_generator['Report'] = "\\maketitle\n"
+        self.titlepage_generator['Markdown'] = ""
         self.supported_metadata = {}
         self.supported_metadata['Beamer'] = ['title', 'author', 'date', 'subtitle']
         self.supported_metadata['Report'] = ['title', 'author', 'date']
+        self.supported_metadata['Markdown'] = ['title', 'subtitle', 'author', 'date']
         self.set_metadata(title=title, author=author, date=date,
                           subtitle=subtitle)
     def get_metadata(self, style):

@@ -75,7 +75,8 @@ wn('''def set_unicode(text):
         text = unicode(text, 'utf-8')
     return text''', cat = 'code')
 wn.build()   #build function to be implemented , see ./test/beamer.tex
-wn.build(style = 'Report')
+wn.build(style='Report')
+wn.build(style='Markdown')
 wn1_output = wn.get_text()
 wn.save()
 wn2 = Worknote()

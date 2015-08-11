@@ -43,6 +43,16 @@ Existing slides can be edited by accessing the `wn.items` property. E.g. The las
 An overview over the document structure can be printed via `print wn`. If unicode is in used in the worknote, it might be necessary to cast `unicode`: `print unicode(wn)`.
 An experimental tool is available via `QNoteOrganizer.edit_note(wn)`.
 
+Output formats
+--------------
+`wn.build()` Creates by default a LaTeX Beamer pdf. The following styles are available and can be passed as argument:
+
+  * **'Beamer'** - Build Beamer.tex  and generate Beamer.pdf (default)
+  * **'Beamer.tex'** - Builds Beamer.tex
+  * **'Report'** - Builds Report.pdf
+  * **'Report.tex'** - Builds Report.tex
+  * **'Markdown'** - Builds Report.md
+
 Item categories
 ---------------
 Item can be added via `wn(item, cat=category)`, where wn is a `Worknote` object, the item is the object to pass to the worknote and the category is a descriptive string. If no category is given, the Worknote tries to determine the category from implicit declarations of the item object. E.g. `wn("  * Listitem")` is equivalent to `wn('Listitem', cat='list')`.
