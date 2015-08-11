@@ -445,10 +445,11 @@ class Worknote(NoteContainer):
         """
         self.foot['Beamer'] = "\\end{document}"
         self.head['Report'] = """
-\\documentclass{report}
+\\documentclass{article}
 \\usepackage[english]{babel}
 \\usepackage[utf8]{inputenc}
 \\usepackage{graphicx}
+\\usepackage{a4wide}
 \\usepackage{color}
 %%%METADATA%%%
 \\begin{document}
@@ -506,6 +507,8 @@ class Worknote(NoteContainer):
             Build format (default = 'Beamer'). Options are:
               * 'Beamer' - Build Beamer.tex  and generate Beamer.pdf
               * 'Beamer.tex' - Build Beamer.tex
+              * 'Report' - Build Report.pdf
+              * 'Report.tex' - Build Report.tex
               * More to come!
         """
         from os import path

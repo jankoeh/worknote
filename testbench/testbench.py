@@ -23,7 +23,7 @@ from pylab import *
 fig = figure(figsize=(8,6))
 plot(arange(10))
 
-from Worknote import Worknote
+from worknote import Worknote
 wn = Worknote("./test")
 wn.set_metadata(title = 'Worknotes', author = 'John Doe mit ö', 
                 date = '\\today', subtitle="The story of an awesome toolkit")
