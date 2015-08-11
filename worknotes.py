@@ -639,15 +639,18 @@ class Worknote(NoteContainer):
 class Metadata(object):
     """
     Class to handle metadata
-
-    Args
-    ----
-    title : str
-    author : str
-    date : str
-    subtitle : str
     """
     def __init__(self, title='', author='', date='', subtitle=''):
+        """
+        Initialize the metadata class.
+
+        Args
+        ----
+        title : str
+        author : str
+        date : str
+        subtitle : str
+        """
         self.metadata = {}
         self.title_formatter = {}
         self.title_formatter['Beamer'] = '\\title{%s}\n'
@@ -663,7 +666,7 @@ class Metadata(object):
                           subtitle=subtitle)
     def get_metadata(self, style):
         """
-        Returns a proper formated metadata string
+        Returns a properly formatted metadata string
         """
         metadata_str = ""
         if self.metadata['title']:
@@ -677,7 +680,7 @@ class Metadata(object):
         return metadata_str
     def get_titlepage(self, style):
         """
-        Returns a properly formated titelpage string
+        Returns a properly formatted titlepage string
         """
         return self.titlepage_generator[style]
     def set_metadata(self, title="", author="", date="", subtitle=""):
