@@ -762,6 +762,10 @@ class Worknote(NoteContainer):
             dest_index = dest_index[0:3]
         else:
             dest_index = dest_index[0:2]
+        if type(self[src_index]) == ListItem and not type(self[dest_index[:-1]]) == List:
+            raise TypeError('ListItem can only be moved to a List object')
+        if type(self[src_index]) == EnumItem and not type(self[dest_index[:-1]]) == Enumerate:
+            raise TypeError('EnumItem can only be moved to a Enumerate object')
         item = self.pop(src_index)
         self.insert(dest_index, item)
         
