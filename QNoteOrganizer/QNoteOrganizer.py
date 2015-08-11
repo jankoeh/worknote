@@ -31,8 +31,10 @@ class QNoteOrganizer(QtGui.QDialog, Ui_QNoteOrganizer):
                                           [item.__class__.__name__, str(item.data)])
         self.item_buffer= []                                         
         self.tb_cut.clicked.connect(self.delete_item)
+        self.tb_insert.clicked.connect(self.insert_item)
 
-    def get_tree(self):
+
+    def get_item_tree(self):
         """
         Returns a list of the selected item and its parents
         I.e. [Ancestor, Parent, selected_item]
@@ -45,38 +47,43 @@ class QNoteOrganizer(QtGui.QDialog, Ui_QNoteOrganizer):
             tree.append(tree[-1].parent())
         tree.reverse()
         return tree
+    def get_indices(self, tree):
+        """
+        get the indices for a tree
+        """
+        indices = []
+        indices.append(self.itemView.indexOfTopLevelItem(tree[0]))
+        for i in xrange(1, len(tree)):
+            indices.append(tree[i-1].indexOfChild(tree[i]))
+        return indices
+        
     def delete_item(self):
         """
         Delete selected item
         """
-        tree = self.get_tree()
-        slide_item = tree.pop(0)
-        slide_index = self.itemView.indexOfTopLevelItem(slide_item)
-        if len(tree) == 0:
-            wn_item = self.worknote.items.pop(slide_index)
-            tv_item = self.itemView.takeTopLevelItem(slide_index)
-            self.item_buffer.append([wn_item, tv_item])
-            return
-        item = tree.pop(0)
-        item_index = slide_item.indexOfChild(item)
-        if len(tree) == 0:
-            wn_item = self.worknote.items[slide_index].items.pop(item_index)
-            tv_item = slide_item.takeChild(item_index)
-            self.item_buffer.append([wn_item, tv_item])            
-            return
-        subitem = tree.pop(0)
-        subitem_index = item.indexOfChild(subitem)
-        if len(tree)== 0:
-            wn_item = self.worknote.items[slide_index].items[item_index].items.pop(subitem_index)
-            tv_item = item.takeChild(subitem_index)
-            self.item_buffer.append([wn_item, tv_item])
+        tree = self.get_item_tree()
+        indices = self.get_indices(tree)
+        if len(tree) == 1:
+            wn_item = self.worknote.items.pop(indices[-1])
+            tv_item = self.itemView.takeTopLevelItem(indices[-1])
+        elif len(tree) == 2:
+            wn_item = self.worknote.items[indices[0]].items.pop(indices[1])
+            tv_item = tree[-2].takeChild(indices[-1])
+        elif len(tree) == 3:
+            wn_item = self.worknote.items[indices[0]].items[indices[1]].items.pop(indices[2])
+            tv_item = tree[-2].takeChild(indices[-1])
         else:
             print "Data not understood"
+        self.item_buffer.append([wn_item, tv_item])            
+
     def insert_item(self):
         """
         Insert item from buffer
         """
         wn_item, tv_item = self.item_buffer.pop(-1)
+        tree = self.get_item_tree()
+        indices = self.get_indices(tree)
+        print indices
         
 def edit_note(worknote):
     """
