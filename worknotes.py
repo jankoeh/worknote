@@ -542,7 +542,6 @@ class Worknote(NoteContainer):
             else:
                 if exists(join(self.workdir, 'notedata.worknote')):
                     if load_if_used or len(self.items) == 0:
-                        print "Loading existing worknote from %s"%workdir
                         self.load(verbosity=1)
                     else:
                         print 'WARNING:', self.workdir, 'is already in use.'
@@ -584,7 +583,7 @@ class Worknote(NoteContainer):
                 raise OSError('No working directory given')
             self.set_workdir(workdir)
         if verbosity > 0:
-            print 'Loading from', self.workdir
+            print 'Loading existing worknote from %s...'%self.workdir
         if exists(join(self.workdir, self.workdir + '.worknote')):
             print 'WARNING: Old savefile naming in use, moving saved notes...'
             from shutils import copyfile
@@ -636,6 +635,57 @@ class Worknote(NoteContainer):
             text += "\n%d %s"%(i, self.items[i].__str__())
         return text
 
+    def __parse_index(self, index):
+        from numpy import int64, array
+        if type(index) == str:
+            try:
+                index = [int(x) for x in index.split(':')]
+            except ValueError:
+                raise ValueError('Invalid index notation: %s'%index)
+            return index
+        elif type(index) in [int, int64]:
+            return [index,]
+        elif type(index) in [list, tuple, array]:
+            return [int(x) for x in index]
+        else:
+            raise ValueError('Invalid value for index: ' + str(index))
+
+    def __exists_item(self, index):
+        item = self.items
+        print index
+        for i in index[:-1]:
+            print i
+            print type(item)
+            try:
+                item = item[i].items
+            except IndexError:
+                return False
+        try:
+            item = item[index[-1]]
+        except IndexError:
+            return False
+        return True
+
+    def pop(self, index):
+        """
+        Remove the item at the given index and return it.
+        
+        Args
+        ----
+        index : int or str or iterable
+            Index must be either an integer index, an iterable list of integer
+            indices or an index notation of the style 'i:j:k' where indices are
+            separated by colons
+        """
+        index = self.__parse_index(index)
+        if self.__exists_item(index):
+            item = self.items
+            for i in index[:-1]:
+                item = item[i].items
+            return item.pop(index[-1])
+        else:
+            raise IndexError('No element at given index: ' + str(index))
+ 
 class Metadata(object):
     """
     Class to handle metadata
@@ -722,7 +772,7 @@ class Metadata(object):
         if 'title' in self.metadata:
             return self.metadata['title']
         return ""
-
+           
 def set_unicode(text):
     """
     Return unicode string
