@@ -656,9 +656,9 @@ class Worknote(NoteContainer):
             print 'Loading existing worknote from "%s"...'%self.workdir
         if exists(join(self.workdir, self.workdir + '.worknote')):
             print 'WARNING: Old savefile naming in use, moving saved notes...'
-            from shutil import copyfile
-            copyfile(join(self.workdir, self.workdir + '.worknote'),
-                     join(self.workdir, 'notedata.worknote'))
+            from shutil import move
+            move(join(self.workdir, self.workdir + '.worknote'),
+                 join(self.workdir, 'notedata.worknote'))
         with open(join(self.workdir,
                        'notedata.worknote'), 'rb') as infile:
             self.head = cPickle.load(infile)
@@ -735,7 +735,7 @@ class Worknote(NoteContainer):
             if issubclass(type(self[index[0:1]]), NoteContainer):
                 self[index[0:1]].add_item(item, index = index[1:])
             else:
-                msg = 'Cannot add {%s} to {%s}'.format(item.__class__.__name__,
+                msg = 'Cannot add {:s} to {:s}'.format(item.__class__.__name__,
                                                        self[index[0:1]].__class__.__name__)
                 raise TypeError(msg)
 
