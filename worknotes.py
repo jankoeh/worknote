@@ -656,7 +656,7 @@ class Worknote(NoteContainer):
             print 'Loading existing worknote from "%s"...'%self.workdir
         if exists(join(self.workdir, self.workdir + '.worknote')):
             print 'WARNING: Old savefile naming in use, moving saved notes...'
-            from shutils import copyfile
+            from shutil import copyfile
             copyfile(join(self.workdir, self.workdir + '.worknote'),
                      join(self.workdir, 'notedata.worknote'))
         with open(join(self.workdir,
