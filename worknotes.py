@@ -284,9 +284,9 @@ class Worknote(items.NoteContainer):
             print 'Loading existing worknote from "%s"...'%self.workdir
         if exists(join(self.workdir, self.workdir + '.worknote')):
             print 'WARNING: Old savefile naming in use, moving saved notes...'
-            from shutils import copyfile
-            copyfile(join(self.workdir, self.workdir + '.worknote'),
-                     join(self.workdir, 'notedata.worknote'))
+            from shutil import move
+            move(join(self.workdir, self.workdir + '.worknote'),
+                 join(self.workdir, 'notedata.worknote'))
         with open(join(self.workdir,
                        'notedata.worknote'), 'rb') as infile:
             self.head = cPickle.load(infile)
@@ -466,4 +466,21 @@ class Metadata(object):
         if 'title' in self.metadata:
             return self.metadata['title']
         return ""
+           
+def set_unicode(text):
+    """
+    Return unicode string
+
+    Args:
+    -----
+    text : str, unicode
+        Text can be string or unicode
+
+    Returns
+    -------
+    text : unicode
+    """
+    if type(text) == str:
+        text = unicode(text, 'utf-8')
+    return text
 
