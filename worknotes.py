@@ -115,6 +115,8 @@ class EnumItem(NoteItem):
             return "\\item {} \n".format(self.data)
         else: #Other styles need ne be handled by enumerate as well
             return "  - {} \n".format(self.data)
+    def __str__(self):
+        return self.__class__.__name__ + ': ' + self.data[:10] + '...'
 
 class ListItem(NoteItem):
     """
@@ -132,6 +134,8 @@ class ListItem(NoteItem):
         else:
             print "Defaulting to Markdown"
             return "  * {} \n".format(self.data)
+    def __str__(self):
+        return self.__class__.__name__ + ': ' + self.data[:10] + '...'
 
 class Equation(NoteItem):
     """
@@ -161,6 +165,8 @@ class Text(NoteItem):
             return text.replace("\n", "\n\n")
         else:
             return self.data
+    def __str__(self):
+        return self.__class__.__name__ + ': ' + self.data[:10] + '...'
 
 class Code(NoteItem):
     """
@@ -175,7 +181,6 @@ class Code(NoteItem):
         else:
             text = '```\n' + self.data + '\n```\n'
         return text
-
 
 class Value(NoteItem):
     """
@@ -238,6 +243,8 @@ class Value(NoteItem):
                 res += string
                 break
         return res
+    def __str__(self):
+        return self.__class__.__name__ + ': {val:0.5g}'.format(val = self.var)
 
 class Figure(NoteItem):
     """
@@ -274,6 +281,9 @@ class Figure(NoteItem):
             return text
         else:
             return self.data
+    def __str__(self):
+        return self.__class__.__name__ + ': ' + self.data
+
 
 class Table(NoteItem):
     """
