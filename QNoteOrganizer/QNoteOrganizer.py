@@ -5,7 +5,7 @@ Created on Sat Aug  8 12:58:34 2015
 @author: koehler
 """
 from __future__ import unicode_literals
-from .. import worknotes
+from .. import items
 from PyQt4 import QtCore, QtGui
 from ui_QNoteOrganizer import Ui_QNoteOrganizer
 
@@ -24,6 +24,7 @@ class QNoteOrganizer(QtGui.QDialog, Ui_QNoteOrganizer):
         """
         update the itemView widget
         """
+        bv_index = self.bufferView.currentRow()
         #empty view
         while self.itemView.topLevelItemCount():
             self.itemView.takeTopLevelItem(0)
@@ -32,7 +33,7 @@ class QNoteOrganizer(QtGui.QDialog, Ui_QNoteOrganizer):
             parent = QtGui.QTreeWidgetItem(self.itemView, 
                                            [slide.__class__.__name__, slide.data])
             for item in slide.items:
-                if issubclass(type(item), worknotes.NoteContainer):
+                if issubclass(type(item), items.NoteContainer):
                     child = QtGui.QTreeWidgetItem(parent, 
                                                   [item.__class__.__name__, ""])
                     for childitem in item.items:
@@ -48,30 +49,24 @@ class QNoteOrganizer(QtGui.QDialog, Ui_QNoteOrganizer):
             self.bufferView.takeItem(0)
         #fill buffer        
         for item in self.item_buffer:
-             QtGui.QListWidgetItem(item.__class__.__name__+" : "+item.data, 
+             QtGui.QListWidgetItem(item.__class__.__name__+" : "+str(item.data) , 
                                    self.bufferView)
         if len(self.item_buffer):
             self.tb_insert.setEnabled(True)
         else:
-            self.tb_insert.setDisabled(True) 
-        
-    def get_item_tree(self):
+            self.tb_insert.setDisabled(True)
+        self.bufferView.setCurrentRow(max(0, bv_index))
+    def get_indices(self):
         """
-        Returns a list of the selected item and its parents
-        I.e. [Ancestor, Parent, selected_item]
+        get the indices for a tree
         """
         tree = []
         tree.append(self.itemView.currentItem())
         if not tree[-1]:
-            return
+            return []
         while tree[-1].parent():
             tree.append(tree[-1].parent())
         tree.reverse()
-        return tree
-    def get_indices(self, tree):
-        """
-        get the indices for a tree
-        """
         indices = []
         indices.append(self.itemView.indexOfTopLevelItem(tree[0]))
         for i in xrange(1, len(tree)):
@@ -82,22 +77,22 @@ class QNoteOrganizer(QtGui.QDialog, Ui_QNoteOrganizer):
         """
         Delete selected item
         """
-        tree = self.get_item_tree()
-        indices = self.get_indices(tree)
+        indices = self.get_indices()
         if indices[0] >= len(self.worknote.items):
             return #empty last element
         wn_item = self.worknote.pop(indices)
+        self.item_buffer.insert(0, wn_item) 
         self.update_itemViews()
-        self.item_buffer.insert(0, wn_item)            
+           
 
     def insert_item(self):
         """
         Insert item from buffer
         """
-        wn_item = self.item_buffer.pop(self.bufferView.currentIndex())
-        tree = self.get_item_tree()
-        indices = self.get_indices(tree)
-        self.worknote.insert(indices, wn_item)
+        wn_item = self.item_buffer.pop( self.bufferView.currentRow() )
+        indices = self.get_indices()
+        print "dd", indices
+        self.worknote.add_item(wn_item, index=indices)
         self.update_itemViews()
         
 def edit_note(worknote):
