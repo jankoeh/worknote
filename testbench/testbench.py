@@ -5,25 +5,13 @@ Created on Fri Jul 31 13:55:18 2015
 @author: koehler
 """
 
-from os.path import exists
-if exists('./test'):
-    print 'Cleaning up test directory...'
-    from os import listdir, remove, rmdir
-    from os.path import join
-    files = listdir('./test')
-    for fn in files:
-        fnpath = join('./test', fn)
-        remove(fnpath)
-    rmdir('./test')
-    print 'Done.'
-
 from pylab import *
 
 fig = figure(figsize=(8,6))
 plot(arange(10))
 
 from worknote import Worknote
-wn = Worknote("./test")
+wn = Worknote("./test", load_if_used = False)
 wn.set_metadata(title = 'Worknotes', author = 'John Doe', 
                 date = '\\today', subtitle="The story of an awesome toolkit")
 wn("First slide title with unicode", cat='slide')

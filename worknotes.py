@@ -72,7 +72,7 @@ class Worknote(items.NoteContainer):
         Document subtitle
     """
     def __init__(self, workdir=None, title='', author='', date='',
-                 subtitle='', **kwargs):
+                 subtitle='', load_if_used=True, **kwargs):
         super(Worknote, self).__init__(**kwargs)
         self.head['Beamer'] = """
 \\documentclass{beamer}
@@ -107,10 +107,6 @@ class Worknote(items.NoteContainer):
         self.foot['Markdown'] = ''
         self.metadata = Metadata()
         self.set_metadata(title, author, date, subtitle)
-        if 'load_if_used' in kwargs:
-            load_if_used = kwargs.pop('load_if_used')
-        else:
-            load_if_used = True
         self.set_workdir(workdir, load_if_used=load_if_used)
 
     def add_item(self, item, index=[], **kwargs):
@@ -216,7 +212,7 @@ class Worknote(items.NoteContainer):
         print "Deprecated! Use build() instead of build_pdf()"
         self.build(style)
 
-    def set_workdir(self, workdir, load_if_used=False):
+    def set_workdir(self, workdir, load_if_used=True):
         """
         Set the working directory. If load_if_used is True or there are no
         items in the current notes, any worknotes present in the directory will
@@ -229,21 +225,26 @@ class Worknote(items.NoteContainer):
             not exist, it will be created.
         """
         from os.path import exists, join, expanduser, expandvars
+        from os import listdir, remove, rmdir, mkdir
         if not workdir is None:
             self.workdir = expanduser(expandvars(workdir))
             if not exists(self.workdir):
-                from os import mkdir
                 try:
                     mkdir(self.workdir)
                 except OSError:
                     print "ERROR: Unable to create working directory"
             else:
-                if exists(join(self.workdir, 'notedata.worknote')):
-                    if load_if_used or len(self.items) == 0:
-                        self.load(verbosity=1)
-                    else:
-                        print 'WARNING:', self.workdir, 'is already in use.'
-                        print '\tSaving will overwrite the saved content.'
+                if not len(listdir(self.workdir)) == 0:
+                    if exists(join(self.workdir, 'notedata.worknote')):
+                        if load_if_used:
+                            self.load(verbosity=1)
+                        else:
+                            print self.workdir, 'is already in use, cleaning...'                        
+                            files = listdir(self.workdir)
+                            for fn in files:
+                                fnpath = join(self.workdir, fn)
+                                remove(fnpath)
+                            print 'Done.'
         else:
             print 'WARNING: No working directory set'
             print '\tUnable to save or add figures'
