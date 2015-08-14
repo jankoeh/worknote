@@ -241,12 +241,14 @@ class Value(NoteItem):
     """
     A numerical value with units and a description
     """
-    def __init__(self, var, precision=3, desc=None, units=None, **kwargs):
+    def __init__(self, var, precision=3, desc=None, units=None, error=None,
+                 **kwargs):
         super(Value, self).__init__(str(var), **kwargs)        
         self.var = var
         self.precision = int(precision)
         self.desc = set_unicode(desc)
         self.units = set_unicode(units)
+        self.error = error
         self.units_wrapper = {}
         self.units_wrapper['Beamer'] = '$%s$'
         self.units_wrapper['Markdown'] = '%s'
@@ -256,16 +258,20 @@ class Value(NoteItem):
         self.value_formatter = {}
         self.value_formatter['Beamer'] = '\\texttt{%s}'
         self.value_formatter['Markdown'] = '%s'
-        self.cr_formater = {}
-        self.cr_formater['Beamer'] = '\\\\\n'
-        self.cr_formater['Markdown'] = '\n\n'
+        self.cr_formatter = {}
+        self.cr_formatter['Beamer'] = '\\\\\n'
+        self.cr_formatter['Markdown'] = '\n\n'
+        self.error_separator = {}
+        self.error_separator['Beamer'] = ' $\pm$ '
+        self.error_separator['Markdown'] = ' +/- '
 
     def get_text(self, style):
         import numpy
         if style == 'Report':
             style = 'Beamer'
         if type(self.var) in [int, numpy.int64]:
-            res = u'{var:d}'.format(var=self.var)
+            fmtstr = u'{var:d}'
+            res = fmtstr.format(var=self.var)
         elif type(self.var) in [float, numpy.float64]:
             if numpy.ceil(numpy.log10(self.var)) < 0 and \
                 abs(numpy.ceil(numpy.log10(self.var))) >= self.precision:
@@ -274,12 +280,14 @@ class Value(NoteItem):
                 outfmt = 'f'
             fmtstr = u'{var:0.' + str(self.precision) + outfmt + '}'
             res = fmtstr.format(var=self.var)
+        if not self.error is None:
+            res += self.error_separator[style] + fmtstr.format(var=self.error)
         res = self.value_formatter[style]%res
         if not self.desc is None:
             res = self.desc + ': ' + res
         if not self.units is None:
             res += ' ' + self.units_wrapper[style]%self.format_units(style)
-        return res + self.cr_formater[style]
+        return res + self.cr_formatter[style]
     def format_units(self, style):
         """
         Formats units into proper style. E.g. m^2 -> \mathsf{m}^2
