@@ -449,13 +449,13 @@ class Metadata(object):
         if not 'subtitle' in self.metadata:
             self.metadata['subtitle'] = ''
         if title:
-            self.metadata['title'] = set_unicode(title)
+            self.metadata['title'] = items.set_unicode(title)
         if author:
-            self.metadata['author'] = set_unicode(author)
+            self.metadata['author'] = items.set_unicode(author)
         if date:
-            self.metadata['date'] = set_unicode(date)
+            self.metadata['date'] = items.set_unicode(date)
         if subtitle:
-            self.metadata['subtitle'] = set_unicode(subtitle)
+            self.metadata['subtitle'] = items.set_unicode(subtitle)
     def __len__(self):
         len = 0
         for key in self.metadata:
@@ -467,20 +467,5 @@ class Metadata(object):
             return self.metadata['title']
         return ""
            
-def set_unicode(text):
-    """
-    Return unicode string
 
-    Args:
-    -----
-    text : str, unicode
-        Text can be string or unicode
-
-    Returns
-    -------
-    text : unicode
-    """
-    if type(text) == str:
-        text = unicode(text, 'utf-8')
-    return text
 
