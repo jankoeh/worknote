@@ -39,9 +39,26 @@ wn.save()
 ```
 
 ### Editing existing slides
-Existing slides can be edited by accessing the `wn.items` property. E.g. The last slide can be deleted by `wn.items.pop(-1)`. An item of a slide can be deleted via `wn.items.items.pop(-1)`.
-An overview over the document structure can be printed via `print wn`. If unicode is in used in the worknote, it might be necessary to cast `unicode`: `print unicode(wn)`.
-An experimental tool is available via `QNoteOrganizer.edit_note(wn)`.
+Existing items can be removed via `Worknote.remove(index)`, where `index` is a tuple describing the item position. An overview over item positions can be obtained via `print wn`.
+The position of two items can be switched via `Worknote.move(source, destination)` where `source` and `destination` are the item indexes.
+An item can be inserted at a specific position by passing the index to the worknote call.
+
+#### Example
+```python
+print wn
+0 Slide: First slide title with unicode
+  0 Text: The Proble...
+  1 Equation
+1 Slide: Slide implicite generation
+  0 Figure: fig1.pdf
+wn.move([0, 0], [1, 0])
+print wn
+0 Slide: First slide title with unicode
+  0 Figure: fig1.pdf
+  1 Equation
+1 Slide: Slide implicite generation
+  0 Text: The Proble...
+```
 
 Output formats
 --------------
