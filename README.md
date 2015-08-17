@@ -42,6 +42,7 @@ wn.save()
 Existing items can be removed via `Worknote.remove(index)`, where `index` is a tuple describing the item position. An overview over item positions can be obtained via `print wn`.
 The position of two items can be switched via `Worknote.move(source, destination)` where `source` and `destination` are the item indexes.
 An item can be inserted at a specific position by passing the index to the worknote call.
+Indices can be written either as a tuple, e.g. ```[0,0]``` is the first element on the first slide, or as a colon-separated text string, e.g. ```'0:0'```. You can use any of the two possible notations for any index that you pass, e.g. ```wn.move([0,0], '1:0')``` is perfectly valid.
 
 #### Example
 ```python
@@ -93,6 +94,7 @@ The following categories are available:
      - desc - A description of the variable. Gets printed in front of the value, followed by a colon.
      - units - The units of the variable. Gets printed behind the value.
      - precision - The precision of the floating point output (ignored for integer variables). If the value is too small to be represented in the chosen precision, the value is automatically printed in scientific notation.
+     - error - An error for the value. Gets printed using the same precision and formatting as the value itself. 
  
   
 Roadmap
