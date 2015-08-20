@@ -346,7 +346,19 @@ class Figure(NoteItem):
             return self.data
     def __str__(self):
         return self.__class__.__name__ + ': ' + self.data
-
+    def move_fig_file(self, fn_num):
+        import shutil
+        from os.path import join, exists
+        fn_figure = 'fig' + str(fn_num) + '.' + self.gfxfmt
+        if exists(join(self.workdir, fn_figure)):
+            from os import remove
+            remove(join(self.workdir, fn_figure))
+        shutil.move(join(self.workdir, self.data), join(self.workdir, fn_figure))
+        self.data = fn_figure
+    def remove_fig_file(self):
+        from os import remove
+        from os.path import join
+        remove(join(self.workdir, self.data))
 
 class Table(NoteItem):
     """

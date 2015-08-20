@@ -107,6 +107,7 @@ class Worknote(items.NoteContainer):
         self.foot['Markdown'] = ''
         self.metadata = Metadata()
         self.set_metadata(title, author, date, subtitle)
+        self.workdir = None
         self.set_workdir(workdir, load_if_used=load_if_used)
 
     def add_item(self, item, index=[], **kwargs):
@@ -227,24 +228,27 @@ class Worknote(items.NoteContainer):
         from os.path import exists, join, expanduser, expandvars
         from os import listdir, remove, rmdir, mkdir
         if not workdir is None:
-            self.workdir = expanduser(expandvars(workdir))
-            if not exists(self.workdir):
-                try:
-                    mkdir(self.workdir)
-                except OSError:
-                    print "ERROR: Unable to create working directory"
+            if self.workdir is None:
+                self.workdir = expanduser(expandvars(workdir))
+                if not exists(self.workdir):
+                    try:
+                        mkdir(self.workdir)
+                    except OSError:
+                        print "ERROR: Unable to create working directory"
+                else:
+                    if not len(listdir(self.workdir)) == 0:
+                        if exists(join(self.workdir, 'notedata.worknote')):
+                            if load_if_used:
+                                self.load(verbosity=1)
+                            else:
+                                print self.workdir, 'is already in use, cleaning...'                        
+                                files = listdir(self.workdir)
+                                for fn in files:
+                                    fnpath = join(self.workdir, fn)
+                                    remove(fnpath)
+                                print 'Done.'
             else:
-                if not len(listdir(self.workdir)) == 0:
-                    if exists(join(self.workdir, 'notedata.worknote')):
-                        if load_if_used:
-                            self.load(verbosity=1)
-                        else:
-                            print self.workdir, 'is already in use, cleaning...'                        
-                            files = listdir(self.workdir)
-                            for fn in files:
-                                fnpath = join(self.workdir, fn)
-                                remove(fnpath)
-                            print 'Done.'
+                pass
         else:
             print 'WARNING: No working directory set'
             print '\tUnable to save or add figures'
