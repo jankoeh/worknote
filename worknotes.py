@@ -382,6 +382,29 @@ class Worknote(items.NoteContainer):
         item = self.pop(src_index)
         self.add_item(item, dest_index)
         
+    def clean_workdir(self, verbosity = 1):
+        """
+        Clean up unneeded files in the working directory. This will remove
+        any file except those referenced by figures and notedata.worknote
+        """
+        from os import listdir
+        from os import remove
+        from os.path import join
+        files = listdir(self.workdir)
+        fig_files = []
+        for slide in self.items:
+            for item in slide.items:
+                if type(item) == items.Figure:
+                    fig_files.append(item.data)
+        for fn in fig_files:
+            files.remove(fn)
+        if 'notedata.worknote' in files:
+            files.remove('notedata.worknote')
+        if verbosity > 0:
+            print 'Removing', len(files), 'files from "' + self.workdir + '"...'
+        for fn in files:
+            remove(join(self.workdir, fn))
+        
 class Metadata(object):
     """
     Class to handle metadata
