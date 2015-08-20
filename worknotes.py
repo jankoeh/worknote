@@ -298,6 +298,7 @@ class Worknote(items.NoteContainer):
             self.foot = cPickle.load(infile)
             self.items = cPickle.load(infile)
             self.metadata = cPickle.load(infile)
+        self.remove_orphaned_figures()
 
     def set_metadata(self, title="", author="", date="", subtitle=""):
         """
@@ -351,11 +352,14 @@ class Worknote(items.NoteContainer):
         """
         item = self.pop(index)
         if type(item) == items.Figure:
-            item.remove_fig_file()
+            if item.exists_fig_file():
+                item.remove_fig_file()
         elif type(item) == items.Slide:
             for subitem in item.items:
                 if type(subitem) == items.Figure:
-                    subitem.remove_fig_file()
+                    if subitem.exists_fig_file():
+                        subitem.remove_fig_file()
+        self.reindex_fig_files()
 
     def move(self, src_index, dest_index):
         """
@@ -404,7 +408,31 @@ class Worknote(items.NoteContainer):
             print 'Removing', len(files), 'files from "' + self.workdir + '"...'
         for fn in files:
             remove(join(self.workdir, fn))
-        
+            
+    def reindex_fig_files(self):
+        new_indices = []
+        index = 1
+        for slide in self.items:
+            for item in slide.items:
+                if type(item) == items.Figure:
+                    new_indices.append([item, index])
+                    index += 1
+        for figure, new_index in new_indices:
+            figure.move_fig_file(new_index)
+            
+    def remove_orphaned_figures(self):
+        indices = []
+        for slide_index in range(0, len(self.items)):
+            for item_index in range(0, len(self.items[slide_index].items)):
+                if type(self.items[slide_index].items[item_index]) == items.Figure:
+                    if not self.items[slide_index].items[item_index].exists_fig_file():
+                        indices.append([slide_index, item_index])
+        if len(indices) > 0:
+            print 'Removing', len(indices), 'orphaned figures...'
+            for index in indices:
+                self.remove(index)
+            self.save()
+                
 class Metadata(object):
     """
     Class to handle metadata

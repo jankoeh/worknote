@@ -359,6 +359,9 @@ class Figure(NoteItem):
         from os import remove
         from os.path import join
         remove(join(self.workdir, self.data))
+    def exists_fig_file(self):
+        from os.path import join, exists
+        return exists(join(self.workdir, self.data))
 
 class Table(NoteItem):
     """
