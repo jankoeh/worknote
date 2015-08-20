@@ -349,7 +349,9 @@ class Worknote(items.NoteContainer):
             indices or an index notation of the style 'i:j:k' where indices are
             separated by colons
         """
-        self.pop(index)
+        obj = self.pop(index)
+        if type(obj) == Figure:
+            obj.remove_fig_file()
         
 
     def move(self, src_index, dest_index):
