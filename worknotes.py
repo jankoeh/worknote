@@ -385,6 +385,7 @@ class Worknote(items.NoteContainer):
             dest_index = dest_index[0:2]
         item = self.pop(src_index)
         self.add_item(item, dest_index)
+        self.reindex_fig_files()
         
     def clean_workdir(self, verbosity = 1):
         """
@@ -394,6 +395,8 @@ class Worknote(items.NoteContainer):
         from os import listdir
         from os import remove
         from os.path import join
+        do_not_delete = ['notedata.worknote', 'Beamer.tex', 'Beamer.pdf', 
+                         'Report.tex', 'Report.pdf', 'Report.md']
         files = listdir(self.workdir)
         fig_files = []
         for slide in self.items:
@@ -402,8 +405,9 @@ class Worknote(items.NoteContainer):
                     fig_files.append(item.data)
         for fn in fig_files:
             files.remove(fn)
-        if 'notedata.worknote' in files:
-            files.remove('notedata.worknote')
+        for fn in do_not_delete:
+            if  in files:
+                files.remove(fn)
         if verbosity > 0:
             print 'Removing', len(files), 'files from "' + self.workdir + '"...'
         for fn in files:
