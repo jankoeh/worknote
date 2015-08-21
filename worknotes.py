@@ -412,13 +412,19 @@ class Worknote(items.NoteContainer):
     def reindex_fig_files(self):
         new_indices = []
         index = 1
+        #We determine the new index order:
         for slide in self.items:
             for item in slide.items:
                 if type(item) == items.Figure:
                     new_indices.append([item, index])
                     index += 1
+        #Reindexing pass 1 shifts everything to temporary filenames:
+        for figure, new_index in new_indices:
+            figure.move_fig_file(new_index*-1)
+        #Reindexing pass 2 produces the final filenames:
         for figure, new_index in new_indices:
             figure.move_fig_file(new_index)
+        
             
     def remove_orphaned_figures(self):
         indices = []
