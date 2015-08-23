@@ -205,14 +205,6 @@ class Worknote(items.NoteContainer):
                 print "Errors encountered during build"
                 print "Check %s for problems"%path.join(self.workdir, style+".tex")
 
-    def build_pdf(self, style='Beamer'):
-        """
-        Generate output in a given style
-        Argument style is currently unused and default Beamer
-        """
-        print "Deprecated! Use build() instead of build_pdf()"
-        self.build(style)
-
     def set_workdir(self, workdir, load_if_used=True):
         """
         Set the working directory. If load_if_used is True or there are no
@@ -287,11 +279,6 @@ class Worknote(items.NoteContainer):
             self.set_workdir(workdir)
         if verbosity > 0:
             print 'Loading existing worknote from "%s"...'%self.workdir
-        if exists(join(self.workdir, self.workdir + '.worknote')):
-            print 'WARNING: Old savefile naming in use, moving saved notes...'
-            from shutil import move
-            move(join(self.workdir, self.workdir + '.worknote'),
-                 join(self.workdir, 'notedata.worknote'))
         with open(join(self.workdir,
                        'notedata.worknote'), 'rb') as infile:
             self.head = cPickle.load(infile)
