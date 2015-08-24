@@ -393,7 +393,7 @@ class Worknote(items.NoteContainer):
         for fn in fig_files:
             files.remove(fn)
         for fn in do_not_delete:
-            if  in files:
+            if fn in files:
                 files.remove(fn)
         if verbosity > 0:
             print 'Removing', len(files), 'files from "' + self.workdir + '"...'
