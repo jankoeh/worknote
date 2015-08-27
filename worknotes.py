@@ -189,6 +189,9 @@ class Worknote(items.NoteContainer):
             f_out = codecs.open(path.join(self.workdir, "Report.md"), 'w',
                                 encoding='utf-8')
             build_pdf = False
+        else:
+            print 'Style "{:s}" is not a supported output style'.format(style)
+            return
         f_out.write(self.get_text(style=style))
         f_out.close()
         if build_pdf:
