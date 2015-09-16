@@ -202,6 +202,9 @@ class Worknote(items.NoteContainer):
             build = call(["pdflatex", style+".tex"], 
                          cwd=self.workdir, 
                          stdout=FNULL)
+            build = call(["pdflatex", style+".tex"], 
+                         cwd=self.workdir, 
+                         stdout=FNULL)
             if build == 0:
                 print "Building sucessful: %s"%path.join(self.workdir, style+".pdf")
             else:
